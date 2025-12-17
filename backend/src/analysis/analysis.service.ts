@@ -34,6 +34,17 @@ Tasks:
 6. Give key takeaways
 `;
 
+      let userId = 'anonymous';
+      if (data.email) {
+        const user = await this.prisma.user.findUnique({
+          where: { email: data.email },
+        });
+      
+        if (user) {
+          userId = user.id;
+        }
+      }
+      
       const response = await this.openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [{ role: 'user', content: prompt }],
@@ -47,7 +58,7 @@ Tasks:
           problem: data.problem,
           code: data.code,
           analysis: analysisText,
-          userId: 'anonymous', // TEMP, will replace with real user
+          userId: userId,
         },
       });
 
