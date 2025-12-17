@@ -12,46 +12,54 @@ type Stats = {
 };
 
 export default function DashboardPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [stats, setStats] = useState<Stats | null>(null);
+  const [recommendations, setRecommendations] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (session?.user?.email) {
-      setLoading(true);
-
-      axios
-        .get(
-          `http://localhost:3001/analyze/stats?email=${session.user.email}`
-        )
-        .then((res) => {
-          setStats(res.data);
-        })
-        .catch((err) => {
-          console.error("Failed to fetch stats", err);
-        })
-        .finally(() => {
-          setLoading(false);
-        });
+    // 🔒 HARD GUARD — nothing runs without email
+    if (status !== "authenticated" || !session?.user?.email) {
+      return;
     }
-  }, [session]);
+
+    const email = session.user.email;
+    setLoading(true);
+
+    // 🔹 Fetch stats
+    axios
+      .get(`http://localhost:3001/analyze/stats?email=${email}`)
+      .then((res) => setStats(res.data))
+      .catch((err) => console.error("Stats error", err))
+      .finally(() => setLoading(false));
+
+    // 🔹 Fetch recommendations
+    axios
+      .get(`http://localhost:3001/analyze/recommendations?email=${email}`)
+      .then((res) => setRecommendations(res.data.result))
+      .catch((err) =>
+        console.error("Recommendations error", err)
+      );
+  }, [session, status]);
 
   return (
     <main className="min-h-screen bg-zinc-900 text-white p-6">
       <div className="max-w-5xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
 
-        {!session?.user?.email && (
-          <p className="text-red-400">
-            Please login to view analytics
-          </p>
+        {status === "loading" && (
+          <p className="text-zinc-400">Loading session...</p>
         )}
 
-        {session?.user?.email && loading && (
+        {status === "unauthenticated" && (
+          <p className="text-red-400">Please login to view dashboard</p>
+        )}
+
+        {status === "authenticated" && loading && (
           <p className="text-zinc-400">Loading stats...</p>
         )}
 
-        {session?.user?.email && stats && (
+        {status === "authenticated" && stats && (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             <StatCard title="Total Solved" value={stats.total} />
             <StatCard title="Beginner" value={stats.beginner} />
@@ -59,12 +67,23 @@ export default function DashboardPage() {
             <StatCard title="Advanced" value={stats.advanced} />
           </div>
         )}
+
+        {status === "authenticated" && recommendations && (
+          <div className="mt-8 bg-zinc-800 border border-zinc-700 rounded-xl p-6">
+            <h2 className="text-xl font-semibold mb-3">
+              AI Recommendations
+            </h2>
+            <div className="whitespace-pre-wrap text-zinc-200 text-sm">
+              {recommendations}
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );
 }
 
-/* 🔹 Reusable Card Component */
+/* 🔹 Stat Card */
 function StatCard({
   title,
   value,
