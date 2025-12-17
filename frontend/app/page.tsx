@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { useSession, signIn, signOut } from "next-auth/react";
+import { useEffect } from "react";
+
 
 export default function Home() {
     const { data: session } = useSession();
@@ -11,6 +13,15 @@ export default function Home() {
   const [result, setResult] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+    useEffect(() => {
+      if (session?.user?.email) {
+        axios.post("http://localhost:3001/auth/sync", {
+          email: session.user.email,
+          name: session.user.name,
+        });
+      }
+    }, [session]);
+
 
   async function analyze() {
     try {
@@ -22,6 +33,7 @@ export default function Home() {
         problem,
         code,
         level,
+        email: session?.user?.email,
       });
 
       setResult(res.data.result);
