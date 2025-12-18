@@ -76,4 +76,50 @@ Tasks:
       };
     }
   }
+  async getRecommendations(email: string) {
+    const submissions = await this.prisma.submission.findMany({
+      where: {
+        user: {
+          email,
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: 10,
+    });
+  
+    if (submissions.length === 0) {
+      return "Not enough data to generate recommendations.";
+    }
+  
+    const summary = submissions
+      .map(
+        (s, i) =>
+          `${i + 1}. Level: ${s.level}\nProblem: ${s.problem}`
+      )
+      .join('\n\n');
+    
+    const prompt = `
+  You are a competitive programming mentor.
+    
+  Based on the following recent submissions, identify:
+  1. Weak areas
+  2. Patterns/topics to improve
+  3. 3 recommended next problem types to practice
+    
+  Submissions:
+  ${summary}
+    
+  Be concise and actionable.
+  `;
+    
+    const response = await this.openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [{ role: 'user', content: prompt }],
+    });
+  
+    return response.choices[0].message.content;
+  }
+  
 }

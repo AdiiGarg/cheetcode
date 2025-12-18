@@ -66,4 +66,16 @@ export class AnalysisController {
 
     return stats;
   }
+  @Get('recommendations')
+  async recommendations(@Query('email') email: string) {
+    if (!email) {
+      return {
+        result: 'Email is required to generate recommendations.',
+      };
+    }
+  
+    const result = await this.analysisService.getRecommendations(email);
+    return { result };
+  }
+  
 }
