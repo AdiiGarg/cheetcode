@@ -38,14 +38,14 @@ export default function DashboardPage() {
 
     // 📊 Fetch stats
     axios
-      .get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/stats?email=${email}`)
+      .get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/analyze/stats?email=${email}`)
       .then((res) => setStats(res.data))
       .catch((err) => console.error("Stats error", err))
       .finally(() => setLoading(false));
 
     // 🤖 Fetch AI recommendations
     axios
-      .get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/recommendations?email=${email}`)
+      .get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/analyze/recommendations?email=${email}`)
       .then((res) => setRecommendations(res.data.result))
       .catch((err) =>
         console.error("Recommendations error", err)
