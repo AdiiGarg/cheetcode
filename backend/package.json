@@ -2,10 +2,9 @@
   "name": "cheetcode-backend",
   "version": "1.0.0",
   "scripts": {
-    "build": "npx nest build",
-    "start": "nest start",
-    "start:dev": "nest start --watch",
-    "start:prod": "node dist/main.js"
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "start:dev": "nest start --watch"
   },
   "engines": {
     "node": ">=18"
