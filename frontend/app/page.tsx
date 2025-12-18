@@ -15,7 +15,7 @@ export default function Home() {
   const [error, setError] = useState('');
     useEffect(() => {
       if (session?.user?.email) {
-        axios.post("${process.env.NEXT_PUBLIC_API_URL}/auth/sync", {
+        axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/sync`, {
           email: session.user.email,
           name: session.user.name,
         });
@@ -29,7 +29,7 @@ export default function Home() {
       setError('');
       setResult('');
 
-      const res = await axios.post('${process.env.NEXT_PUBLIC_API_URL}/analyze', {
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/analyze`, {
         problem,
         code,
         level,

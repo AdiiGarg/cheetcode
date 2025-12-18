@@ -25,7 +25,7 @@ export default function MySubmissionsPage() {
 
     axios
       .get(
-        `${process.env.NEXT_PUBLIC_API_URL}/analyze/my-submissions?email=${session.user.email}`
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/analyze/my-submissions?email=${session.user.email}`
       )
       .then((res) => setSubmissions(res.data))
       .catch((err) =>
