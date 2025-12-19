@@ -82,6 +82,15 @@ public class Main {
       .catch(() => {});
   }, [session]);
 
+  function normalizeCode(code: string) {
+    if (!code) return '';
+    return code
+      .replace(/\\n/g, '\n')
+      .replace(/\t/g, '    ')
+      .trim();
+  }
+
+
   // 🔹 Analyze
   async function analyze() {
     if (!BACKEND_URL) {
@@ -259,8 +268,20 @@ public class Main {
                     </p>
                     <p className="mt-1">{a.description}</p>
 
-                    <pre className="bg-black/40 p-3 rounded mt-3 overflow-x-auto">
-{a.code}
+                    <pre
+                      className="
+                        bg-black/50 
+                        p-3 
+                        rounded-lg 
+                        mt-2 
+                        text-sm 
+                        overflow-x-auto 
+                        font-mono 
+                        leading-relaxed
+                        whitespace-pre
+                      "
+                    >
+                      <code>{normalizeCode(a.code)}</code>
                     </pre>
 
                     <p className="text-xs text-zinc-400 mt-1">

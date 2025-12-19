@@ -64,8 +64,14 @@ ${code}
       const prompt = `
 You are a competitive programming mentor.
 
-Return ONLY valid JSON.
-No markdown. No explanation outside JSON.
+Analyze the following submission and return ONLY valid JSON.
+NO markdown. NO explanations outside JSON.
+
+IMPORTANT RULES:
+- Code MUST contain \\n for line breaks
+- Code MUST be properly indented
+- Do NOT compress code into one line
+- Code must look exactly like real editor code
 
 JSON FORMAT:
 {
@@ -76,7 +82,7 @@ JSON FORMAT:
     {
       "title": string,
       "description": string,
-      "code": string,
+      "code": string, // MUST include \\n and indentation
       "timeComplexity": string,
       "spaceComplexity": string
     }
