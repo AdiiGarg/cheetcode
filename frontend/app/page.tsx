@@ -70,17 +70,19 @@ public class Main {
 // write your code here`,
   };
 
-  /* 🔹 Sync user */
+  // 🔹 Sync user after login
   useEffect(() => {
     if (!session?.user?.email || !BACKEND_URL) return;
 
-    axios.post(`${BACKEND_URL}/auth/sync`, {
-      email: session.user.email,
-      name: session.user.name,
-    }).catch(() => {});
+    axios
+      .post(`${BACKEND_URL}/auth/sync`, {
+        email: session.user.email,
+        name: session.user.name,
+      })
+      .catch(() => {});
   }, [session]);
 
-  /* 🔹 Analyze */
+  // 🔹 Analyze
   async function analyze() {
     if (!BACKEND_URL) {
       setError('Backend URL not configured');
@@ -105,7 +107,7 @@ public class Main {
         email: session.user.email,
       });
 
-      // ✅ CORRECT DATA MAPPING
+      // ✅ Backend already returns structured JSON
       setDetectedLevel(res.data.level);
       setAnalysis(res.data.analysis);
     } catch (err) {
@@ -244,20 +246,24 @@ public class Main {
 
               {activeTab === 'complexity' && (
                 <>
-                  <p><b>Time:</b> {analysis.timeComplexity}</p>
-                  <p><b>Space:</b> {analysis.spaceComplexity}</p>
+                  <p><b>Time Complexity:</b> {analysis.timeComplexity}</p>
+                  <p><b>Space Complexity:</b> {analysis.spaceComplexity}</p>
                 </>
               )}
 
               {activeTab === 'approaches' &&
                 analysis.betterApproaches.map((a, i) => (
-                  <div key={i} className="mb-4">
-                    <p className="font-semibold">{a.title}</p>
-                    <p>{a.description}</p>
-                    <pre className="bg-black/40 p-2 rounded mt-2">
+                  <div key={i} className="mb-6">
+                    <p className="font-semibold text-emerald-400">
+                      {a.title}
+                    </p>
+                    <p className="mt-1">{a.description}</p>
+
+                    <pre className="bg-black/40 p-3 rounded mt-3 overflow-x-auto">
 {a.code}
                     </pre>
-                    <p className="text-xs text-zinc-400">
+
+                    <p className="text-xs text-zinc-400 mt-1">
                       TC: {a.timeComplexity} | SC: {a.spaceComplexity}
                     </p>
                   </div>
