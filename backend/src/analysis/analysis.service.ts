@@ -12,38 +12,10 @@ export class AnalysisService {
     });
   }
 
-  // ===================== AUTO DIFFICULTY DETECTION =====================
-  private async detectDifficulty(
-    problem: string,
-    code: string,
-  ): Promise<'easy' | 'medium' | 'hard'> {
-    const prompt = `
-Classify the difficulty of this coding problem.
-Return ONLY one word: easy | medium | hard.
-
-Problem:
-${problem}
-
-Code:
-${code}
-`;
-
-    const res = await this.groq.chat.completions.create({
-      model: 'llama-3.1-8b-instant',
-      messages: [{ role: 'user', content: prompt }],
-    });
-
-    const raw =
-      res.choices[0]?.message?.content?.toLowerCase().trim() || 'easy';
-
-    if (raw.includes('hard')) return 'hard';
-    if (raw.includes('medium')) return 'medium';
-    return 'easy';
-  }
-
   // ===================== ANALYZE CODE =====================
   async analyze(data: any) {
     try {
+      // 🔐 Auth guard
       if (!data.email) {
         return { error: 'User not authenticated.' };
       }
@@ -56,13 +28,14 @@ ${code}
         return { error: 'User not found.' };
       }
 
-      const detectedLevel = await this.detectDifficulty(
-        data.problem,
-        data.code,
-      );
+      // ✅ SINGLE SOURCE OF TRUTH FOR LEVEL
+      const detectedLevel = data.level || 'medium';
 
+      // 🧠 STRUCTURED PROMPT (JSON ONLY)
       const prompt = `
 You are a competitive programming mentor.
+
+Difficulty: ${detectedLevel}
 
 Analyze the following submission and return ONLY valid JSON.
 NO markdown. NO explanations outside JSON.
@@ -71,7 +44,8 @@ IMPORTANT RULES:
 - Code MUST contain \\n for line breaks
 - Code MUST be properly indented
 - Do NOT compress code into one line
-- Code must look exactly like real editor code
+- Code must look like real editor code
+- ALL fields MUST exist (use empty string "" if needed)
 
 JSON FORMAT:
 {
@@ -82,7 +56,7 @@ JSON FORMAT:
     {
       "title": string,
       "description": string,
-      "code": string, // MUST include \\n and indentation
+      "code": string,
       "timeComplexity": string,
       "spaceComplexity": string
     }
@@ -105,6 +79,7 @@ ${data.code}
 
       const raw = response.choices[0]?.message?.content || '{}';
 
+      // 🛡️ SAFE JSON PARSE
       let parsed;
       try {
         parsed = JSON.parse(raw);
@@ -118,16 +93,18 @@ ${data.code}
         };
       }
 
+      // 💾 SAVE SUBMISSION
       const submission = await this.prisma.submission.create({
         data: {
           problem: data.problem,
           code: data.code,
           analysis: raw,
-          level: detectedLevel,
+          level: detectedLevel, // ✅ FIXED
           user: { connect: { id: user.id } },
         },
       });
 
+      // ✅ FRONTEND-FRIENDLY RESPONSE
       return {
         id: submission.id,
         level: detectedLevel,
@@ -154,7 +131,7 @@ ${data.code}
     }
 
     const summary = submissions
-      .map((s) => `Level: ${s.level}\nProblem: ${s.problem}`)
+      .map((s) => `Difficulty: ${s.level}\nProblem: ${s.problem}`)
       .join('\n\n');
 
     const prompt = `
