@@ -9,11 +9,20 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 type TabType = 'explanation' | 'complexity' | 'approaches' | 'next';
 
+type BetterApproach = {
+  title: string;
+  description: string;
+  code: string;
+  timeComplexity: string;
+  spaceComplexity: string;
+};
+
 type AnalysisSections = {
   explanation: string;
-  complexity: string;
-  approaches: string;
-  next: string;
+  timeComplexity: string;
+  spaceComplexity: string;
+  betterApproaches: BetterApproach[];
+  nextSteps: string;
 };
 
 export default function Home() {
@@ -23,7 +32,7 @@ export default function Home() {
   const [code, setCode] = useState('');
   const [language, setLanguage] = useState('');
 
-  const [sections, setSections] = useState<AnalysisSections | null>(null);
+  const [analysis, setAnalysis] = useState<AnalysisSections | null>(null);
   const [detectedLevel, setDetectedLevel] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('explanation');
 
@@ -65,44 +74,11 @@ public class Main {
   useEffect(() => {
     if (!session?.user?.email || !BACKEND_URL) return;
 
-    axios
-      .post(`${BACKEND_URL}/auth/sync`, {
-        email: session.user.email,
-        name: session.user.name,
-      })
-      .catch(() => {});
+    axios.post(`${BACKEND_URL}/auth/sync`, {
+      email: session.user.email,
+      name: session.user.name,
+    }).catch(() => {});
   }, [session]);
-
-  /* 🔹 Split GPT response into sections */
-  function splitAnalysis(text: string): AnalysisSections {
-    const sections: AnalysisSections = {
-      explanation: '',
-      complexity: '',
-      approaches: '',
-      next: '',
-    };
-
-    if (!text) return sections;
-
-    const lower = text.toLowerCase();
-
-    const extract = (start: string, end?: string) => {
-      const s = lower.indexOf(start);
-      if (s === -1) return '';
-      const e = end ? lower.indexOf(end, s + 1) : -1;
-      return text.substring(s, e === -1 ? text.length : e).trim();
-    };
-
-    sections.explanation = extract('explain');
-    sections.complexity =
-      extract('time complexity') || extract('complexity');
-    sections.approaches =
-      extract('better approaches') || extract('suggest');
-    sections.next =
-      extract('key takeaways') || extract('next');
-
-    return sections;
-  }
 
   /* 🔹 Analyze */
   async function analyze() {
@@ -119,7 +95,7 @@ public class Main {
     try {
       setLoading(true);
       setError('');
-      setSections(null);
+      setAnalysis(null);
       setDetectedLevel(null);
       setActiveTab('explanation');
 
@@ -129,8 +105,9 @@ public class Main {
         email: session.user.email,
       });
 
+      // ✅ CORRECT DATA MAPPING
       setDetectedLevel(res.data.level);
-      setSections(splitAnalysis(res.data.result));
+      setAnalysis(res.data.analysis);
     } catch (err) {
       console.error(err);
       setError('Something went wrong. Please try again.');
@@ -242,8 +219,8 @@ public class Main {
           </div>
         )}
 
-        {/* Analysis Tabs */}
-        {sections && (
+        {/* Analysis */}
+        {analysis && (
           <div className="bg-zinc-800 p-6 rounded-xl">
             <div className="flex gap-2 mb-4">
               {(['explanation', 'complexity', 'approaches', 'next'] as TabType[])
@@ -262,8 +239,31 @@ public class Main {
                 ))}
             </div>
 
-            <div className="bg-zinc-900 p-4 rounded whitespace-pre-wrap text-sm">
-              {sections[activeTab] || 'No data available'}
+            <div className="bg-zinc-900 p-4 rounded text-sm whitespace-pre-wrap">
+              {activeTab === 'explanation' && analysis.explanation}
+
+              {activeTab === 'complexity' && (
+                <>
+                  <p><b>Time:</b> {analysis.timeComplexity}</p>
+                  <p><b>Space:</b> {analysis.spaceComplexity}</p>
+                </>
+              )}
+
+              {activeTab === 'approaches' &&
+                analysis.betterApproaches.map((a, i) => (
+                  <div key={i} className="mb-4">
+                    <p className="font-semibold">{a.title}</p>
+                    <p>{a.description}</p>
+                    <pre className="bg-black/40 p-2 rounded mt-2">
+{a.code}
+                    </pre>
+                    <p className="text-xs text-zinc-400">
+                      TC: {a.timeComplexity} | SC: {a.spaceComplexity}
+                    </p>
+                  </div>
+                ))}
+
+              {activeTab === 'next' && analysis.nextSteps}
             </div>
           </div>
         )}
