@@ -23,11 +23,10 @@ export default function Home() {
   const [code, setCode] = useState('');
   const [language, setLanguage] = useState('');
 
-  const [result, setResult] = useState('');
   const [sections, setSections] = useState<AnalysisSections | null>(null);
   const [detectedLevel, setDetectedLevel] = useState<string | null>(null);
-
   const [activeTab, setActiveTab] = useState<TabType>('explanation');
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -62,16 +61,19 @@ public class Main {
 // write your code here`,
   };
 
-  // 🔹 Sync user after login
+  /* 🔹 Sync user */
   useEffect(() => {
     if (!session?.user?.email || !BACKEND_URL) return;
 
-    axios.post(`${BACKEND_URL}/auth/sync`, {
-      email: session.user.email,
-      name: session.user.name,
-    }).catch(() => {});
+    axios
+      .post(`${BACKEND_URL}/auth/sync`, {
+        email: session.user.email,
+        name: session.user.name,
+      })
+      .catch(() => {});
   }, [session]);
 
+  /* 🔹 Split GPT response into sections */
   function splitAnalysis(text: string): AnalysisSections {
     const sections: AnalysisSections = {
       explanation: '',
@@ -102,6 +104,7 @@ public class Main {
     return sections;
   }
 
+  /* 🔹 Analyze */
   async function analyze() {
     if (!BACKEND_URL) {
       setError('Backend URL not configured');
@@ -116,7 +119,6 @@ public class Main {
     try {
       setLoading(true);
       setError('');
-      setResult('');
       setSections(null);
       setDetectedLevel(null);
       setActiveTab('explanation');
@@ -127,12 +129,8 @@ public class Main {
         email: session.user.email,
       });
 
-      const analysisText = res.data.result;
-      const level = res.data.level;
-
-      setResult(analysisText);
-      setDetectedLevel(level);
-      setSections(splitAnalysis(analysisText));
+      setDetectedLevel(res.data.level);
+      setSections(splitAnalysis(res.data.result));
     } catch (err) {
       console.error(err);
       setError('Something went wrong. Please try again.');
@@ -168,8 +166,8 @@ public class Main {
           AI-powered coding submission analysis
         </p>
 
-        {/* Controls */}
-        <div className="bg-zinc-800 p-6 rounded-xl mb-6 space-y-4">
+        {/* Input */}
+        <div className="bg-zinc-800 p-6 rounded-xl space-y-4 mb-6">
           <select
             className="w-full bg-zinc-900 border border-zinc-700 p-2 rounded"
             value={language}
@@ -256,7 +254,7 @@ public class Main {
                     className={`px-3 py-1 rounded text-sm ${
                       activeTab === tab
                         ? 'bg-emerald-600'
-                        : 'bg-zinc-700'
+                        : 'bg-zinc-700 hover:bg-zinc-600'
                     }`}
                   >
                     {tab.toUpperCase()}
