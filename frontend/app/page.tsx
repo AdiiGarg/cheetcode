@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useSession, signIn, signOut } from 'next-auth/react';
-import Editor from "@monaco-editor/react";
-
+import Editor from '@monaco-editor/react';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
@@ -13,67 +12,52 @@ export default function Home() {
 
   const [problem, setProblem] = useState('');
   const [code, setCode] = useState('');
-  const [level, setLevel] = useState('beginner');
+  const [language, setLanguage] = useState('');
+
   const [result, setResult] = useState('');
+  const [detectedLevel, setDetectedLevel] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [language, setLanguage] = useState("");
+
   const defaultCodeMap: Record<string, string> = {
-  cpp: 
-`#include <bits/stdc++.h>
+    cpp: `#include <bits/stdc++.h>
 using namespace std;
 
 int main() {
     ios::sync_with_stdio(false);
     cin.tie(NULL);
+
     // write your code here
-  
+
     return 0;
 }`,
-
-  python:
-`def solve():
+    python: `def solve():
     # write your code here
     pass
 
-  if __name__ == "__main__":
-      solve()`,
-
-  java: 
-`import java.io.*;
+if __name__ == "__main__":
+    solve()`,
+    java: `import java.io.*;
 import java.util.*;
-    
+
 public class Main {
     public static void main(String[] args) {
-      // write your code here
+        // write your code here
     }
 }`,
+    javascript: `"use strict";
 
-  javascript: 
-`"use strict";
-    // write your code here
-  `,
+// write your code here`,
   };
-  
 
-
-  // 🔹 Debug: confirm backend URL is injected
-  useEffect(() => {
-    console.log('BACKEND_URL:', BACKEND_URL);
-  }, []);
-
-  // 🔹 Sync user with backend after login
+  // 🔹 Sync user after login
   useEffect(() => {
     if (!session?.user?.email || !BACKEND_URL) return;
 
-    axios
-      .post(`${BACKEND_URL}/auth/sync`, {
-        email: session.user.email,
-        name: session.user.name,
-      })
-      .catch((err) => {
-        console.error('Auth sync failed:', err);
-      });
+    axios.post(`${BACKEND_URL}/auth/sync`, {
+      email: session.user.email,
+      name: session.user.name,
+    }).catch(() => {});
   }, [session]);
 
   async function analyze() {
@@ -91,14 +75,15 @@ public class Main {
       setLoading(true);
       setError('');
       setResult('');
+      setDetectedLevel(null);
 
       const res = await axios.post(`${BACKEND_URL}/analyze`, {
         problem,
         code,
-        level,
         email: session.user.email,
       });
 
+      setDetectedLevel(res.data.level);
       setResult(res.data.result);
     } catch (err) {
       console.error(err);
@@ -110,7 +95,7 @@ public class Main {
 
   return (
     <main className="min-h-screen bg-zinc-900 text-white p-6">
-      {/* 🔹 Auth buttons */}
+      {/* Auth */}
       <div className="flex justify-end mb-4">
         {!session ? (
           <button
@@ -137,15 +122,15 @@ public class Main {
 
         {/* Controls */}
         <div className="bg-zinc-800 p-6 rounded-xl mb-6 space-y-4">
+          {/* Language dropdown */}
           <select
             className="w-full bg-zinc-900 border border-zinc-700 p-2 rounded"
             value={language}
             onChange={(e) => {
               const lang = e.target.value;
               setLanguage(lang);
-              setCode(defaultCodeMap[lang] || "");
+              setCode(defaultCodeMap[lang] || '');
             }}
-
           >
             <option value="">Select Language</option>
             <option value="cpp">C++</option>
@@ -154,44 +139,28 @@ public class Main {
             <option value="javascript">JavaScript</option>
           </select>
 
-          <select
-            className="w-full bg-zinc-900 border border-zinc-700 p-2 rounded"
-            value={level}
-            onChange={(e) => setLevel(e.target.value)}
-          >
-            <option value="beginner">Beginner</option>
-            <option value="intermediate">Intermediate</option>
-            <option value="advanced">Advanced</option>
-          </select>
-
+          {/* Problem */}
           <textarea
             className="w-full bg-zinc-900 border border-zinc-700 p-3 rounded"
             rows={4}
-            placeholder="Paste problem statement or link"
+            placeholder="Paste problem statement / link / question number"
             value={problem}
             onChange={(e) => setProblem(e.target.value)}
           />
 
+          {/* Code Editor */}
           {language && (
             <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-4">
-              <p className="text-sm text-zinc-400 mb-1">
+              <p className="text-sm text-zinc-400 mb-2">
                 Paste your code below or start writing here
               </p>
 
               <Editor
                 height="300px"
-                language={
-                  language === "cpp"
-                    ? "cpp"
-                    : language === "python"
-                    ? "python"
-                    : language === "java"
-                    ? "java"
-                    : "javascript"
-                }
+                language={language === 'cpp' ? 'cpp' : language}
                 theme="vs-dark"
                 value={code}
-                onChange={(value) => setCode(value || "")}
+                onChange={(value) => setCode(value || '')}
                 options={{
                   tabSize: 4,
                   insertSpaces: true,
@@ -199,12 +168,11 @@ public class Main {
                   fontSize: 14,
                   minimap: { enabled: false },
                   scrollBeyondLastLine: false,
-                  wordWrap: "on",
+                  wordWrap: 'on',
                 }}
               />
             </div>
           )}
-          
 
           <button
             onClick={analyze}
@@ -222,7 +190,19 @@ public class Main {
           </div>
         )}
 
-        {/* Result */}
+        {/* Detected Difficulty */}
+        {detectedLevel && (
+          <div className="mb-4 px-4 py-2 rounded-lg bg-zinc-800 border border-zinc-700 inline-block">
+            <span className="text-sm text-zinc-400">
+              Detected Difficulty:
+            </span>{' '}
+            <span className="font-semibold text-emerald-400 uppercase">
+              {detectedLevel}
+            </span>
+          </div>
+        )}
+
+        {/* Analysis */}
         {result && (
           <div className="bg-zinc-800 p-6 rounded-xl whitespace-pre-wrap">
             <h2 className="text-xl font-semibold mb-2">Analysis</h2>

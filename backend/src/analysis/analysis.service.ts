@@ -45,7 +45,6 @@ ${code}
 
     if (raw.includes('hard')) return 'hard';
     if (raw.includes('medium')) return 'medium';
-
     return 'easy';
   }
 
