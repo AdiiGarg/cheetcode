@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useSession, signIn, signOut } from 'next-auth/react';
+import Editor from "@monaco-editor/react";
+
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
@@ -15,6 +17,45 @@ export default function Home() {
   const [result, setResult] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [language, setLanguage] = useState("");
+  const defaultCodeMap: Record<string, string> = {
+  cpp: 
+`#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(NULL);
+    // write your code here
+  
+    return 0;
+}`,
+
+  python:
+`def solve():
+    # write your code here
+    pass
+
+  if __name__ == "__main__":
+      solve()`,
+
+  java: 
+`import java.io.*;
+import java.util.*;
+    
+public class Main {
+    public static void main(String[] args) {
+      // write your code here
+    }
+}`,
+
+  javascript: 
+`"use strict";
+    // write your code here
+  `,
+  };
+  
+
 
   // 🔹 Debug: confirm backend URL is injected
   useEffect(() => {
@@ -98,6 +139,23 @@ export default function Home() {
         <div className="bg-zinc-800 p-6 rounded-xl mb-6 space-y-4">
           <select
             className="w-full bg-zinc-900 border border-zinc-700 p-2 rounded"
+            value={language}
+            onChange={(e) => {
+              const lang = e.target.value;
+              setLanguage(lang);
+              setCode(defaultCodeMap[lang] || "");
+            }}
+
+          >
+            <option value="">Select Language</option>
+            <option value="cpp">C++</option>
+            <option value="python">Python</option>
+            <option value="java">Java</option>
+            <option value="javascript">JavaScript</option>
+          </select>
+
+          <select
+            className="w-full bg-zinc-900 border border-zinc-700 p-2 rounded"
             value={level}
             onChange={(e) => setLevel(e.target.value)}
           >
@@ -114,13 +172,39 @@ export default function Home() {
             onChange={(e) => setProblem(e.target.value)}
           />
 
-          <textarea
-            className="w-full bg-zinc-900 border border-zinc-700 p-3 rounded font-mono"
-            rows={6}
-            placeholder="Paste your solution code"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-          />
+          {language && (
+            <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-4">
+              <p className="text-sm text-zinc-400 mb-1">
+                Paste your code below or start writing here
+              </p>
+
+              <Editor
+                height="300px"
+                language={
+                  language === "cpp"
+                    ? "cpp"
+                    : language === "python"
+                    ? "python"
+                    : language === "java"
+                    ? "java"
+                    : "javascript"
+                }
+                theme="vs-dark"
+                value={code}
+                onChange={(value) => setCode(value || "")}
+                options={{
+                  tabSize: 4,
+                  insertSpaces: true,
+                  detectIndentation: false,
+                  fontSize: 14,
+                  minimap: { enabled: false },
+                  scrollBeyondLastLine: false,
+                  wordWrap: "on",
+                }}
+              />
+            </div>
+          )}
+          
 
           <button
             onClick={analyze}
