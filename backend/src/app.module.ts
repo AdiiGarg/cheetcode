@@ -7,7 +7,7 @@ import { LeetCodeModule } from './leetcode/leetcode.module';
 
 @Module({
   imports: [
-    LeetCodeModule,PrismaModule, AnalysisModule, UserModule, AuthModule
+    LeetCodeModule, PrismaModule, AnalysisModule, UserModule, AuthModule
   ],
 })
 export class AppModule {}

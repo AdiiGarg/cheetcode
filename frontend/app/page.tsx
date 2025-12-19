@@ -39,6 +39,11 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const [leetcodeLoading, setLeetcodeLoading] = useState(false);
+  const [leetcodeError, setLeetcodeError] = useState('');
+  const [leetcodeFetched, setLeetcodeFetched] = useState(false);
+
+
   const defaultCodeMap: Record<string, string> = {
     cpp: `#include <bits/stdc++.h>
 using namespace std;
@@ -127,6 +132,39 @@ public class Main {
     }
   }
 
+  async function fetchFromLeetCode() {
+    if (!problem.startsWith('http')) {
+      setLeetcodeError('Paste a valid LeetCode problem URL');
+      return;
+    }
+
+    try {
+      setLeetcodeLoading(true);
+      setLeetcodeError('');
+
+      const res = await axios.get(
+        `${BACKEND_URL}/leetcode/fetch`,
+        { params: { input: problem } }
+      );
+
+      // Autofill problem statement
+      setProblem(
+        `Title: ${res.data.title}\n\n${res.data.description}`
+      );
+
+      // Set difficulty from LeetCode
+      setDetectedLevel(res.data.difficulty.toLowerCase());
+
+      setLeetcodeFetched(true);
+    } catch (err) {
+      console.error(err);
+      setLeetcodeError('Failed to fetch from LeetCode');
+    } finally {
+      setLeetcodeLoading(false);
+    }
+  }
+
+
   return (
     <main className="min-h-screen bg-zinc-900 text-white p-6">
       {/* Auth */}
@@ -179,6 +217,27 @@ public class Main {
             value={problem}
             onChange={(e) => setProblem(e.target.value)}
           />
+          <button
+            onClick={fetchFromLeetCode}
+            disabled={leetcodeLoading}
+            className="w-full bg-blue-600 hover:bg-blue-700 transition p-2 rounded font-medium"
+          >
+            {leetcodeLoading ? 'Fetching...' : 'Fetch from LeetCode'}
+          </button>
+          
+          {leetcodeError && (
+            <p className="text-red-400 text-sm">{leetcodeError}</p>
+          )}
+          <textarea
+            disabled={leetcodeFetched}
+            className="w-full bg-zinc-900 border border-zinc-700 p-3 rounded"
+            rows={4}
+            placeholder="Paste problem statement / link / question number"
+            value={problem}
+            onChange={(e) => setProblem(e.target.value)}
+          />
+                  
+
 
           {language && (
             <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-4">
@@ -224,11 +283,20 @@ public class Main {
         {detectedLevel && (
           <div className="mb-4 inline-block px-4 py-1 rounded bg-zinc-800 border border-zinc-700">
             Detected Difficulty:{' '}
-            <span className="font-semibold text-emerald-400 uppercase">
+            <span
+              className={`font-semibold uppercase ${
+                detectedLevel === 'easy'
+                  ? 'text-green-400'
+                  : detectedLevel === 'medium'
+                  ? 'text-yellow-400'
+                  : 'text-red-400'
+              }`}
+            >
               {detectedLevel}
             </span>
           </div>
         )}
+
 
         {/* Analysis */}
         {analysis && (
