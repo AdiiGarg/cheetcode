@@ -7,6 +7,15 @@ import Editor from '@monaco-editor/react';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
+type TabType = 'explanation' | 'complexity' | 'approaches' | 'next';
+
+type AnalysisSections = {
+  explanation: string;
+  complexity: string;
+  approaches: string;
+  next: string;
+};
+
 export default function Home() {
   const { data: session } = useSession();
 
@@ -15,7 +24,10 @@ export default function Home() {
   const [language, setLanguage] = useState('');
 
   const [result, setResult] = useState('');
+  const [sections, setSections] = useState<AnalysisSections | null>(null);
   const [detectedLevel, setDetectedLevel] = useState<string | null>(null);
+
+  const [activeTab, setActiveTab] = useState<TabType>('explanation');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -60,6 +72,36 @@ public class Main {
     }).catch(() => {});
   }, [session]);
 
+  function splitAnalysis(text: string): AnalysisSections {
+    const sections: AnalysisSections = {
+      explanation: '',
+      complexity: '',
+      approaches: '',
+      next: '',
+    };
+
+    if (!text) return sections;
+
+    const lower = text.toLowerCase();
+
+    const extract = (start: string, end?: string) => {
+      const s = lower.indexOf(start);
+      if (s === -1) return '';
+      const e = end ? lower.indexOf(end, s + 1) : -1;
+      return text.substring(s, e === -1 ? text.length : e).trim();
+    };
+
+    sections.explanation = extract('explain');
+    sections.complexity =
+      extract('time complexity') || extract('complexity');
+    sections.approaches =
+      extract('better approaches') || extract('suggest');
+    sections.next =
+      extract('key takeaways') || extract('next');
+
+    return sections;
+  }
+
   async function analyze() {
     if (!BACKEND_URL) {
       setError('Backend URL not configured');
@@ -75,7 +117,9 @@ public class Main {
       setLoading(true);
       setError('');
       setResult('');
+      setSections(null);
       setDetectedLevel(null);
+      setActiveTab('explanation');
 
       const res = await axios.post(`${BACKEND_URL}/analyze`, {
         problem,
@@ -83,8 +127,12 @@ public class Main {
         email: session.user.email,
       });
 
-      setDetectedLevel(res.data.level);
-      setResult(res.data.result);
+      const analysisText = res.data.result;
+      const level = res.data.level;
+
+      setResult(analysisText);
+      setDetectedLevel(level);
+      setSections(splitAnalysis(analysisText));
     } catch (err) {
       console.error(err);
       setError('Something went wrong. Please try again.');
@@ -122,7 +170,6 @@ public class Main {
 
         {/* Controls */}
         <div className="bg-zinc-800 p-6 rounded-xl mb-6 space-y-4">
-          {/* Language dropdown */}
           <select
             className="w-full bg-zinc-900 border border-zinc-700 p-2 rounded"
             value={language}
@@ -139,7 +186,6 @@ public class Main {
             <option value="javascript">JavaScript</option>
           </select>
 
-          {/* Problem */}
           <textarea
             className="w-full bg-zinc-900 border border-zinc-700 p-3 rounded"
             rows={4}
@@ -148,7 +194,6 @@ public class Main {
             onChange={(e) => setProblem(e.target.value)}
           />
 
-          {/* Code Editor */}
           {language && (
             <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-4">
               <p className="text-sm text-zinc-400 mb-2">
@@ -160,14 +205,13 @@ public class Main {
                 language={language === 'cpp' ? 'cpp' : language}
                 theme="vs-dark"
                 value={code}
-                onChange={(value) => setCode(value || '')}
+                onChange={(v) => setCode(v || '')}
                 options={{
                   tabSize: 4,
                   insertSpaces: true,
                   detectIndentation: false,
                   fontSize: 14,
                   minimap: { enabled: false },
-                  scrollBeyondLastLine: false,
                   wordWrap: 'on',
                 }}
               />
@@ -190,23 +234,39 @@ public class Main {
           </div>
         )}
 
-        {/* Detected Difficulty */}
+        {/* Difficulty */}
         {detectedLevel && (
-          <div className="mb-4 px-4 py-2 rounded-lg bg-zinc-800 border border-zinc-700 inline-block">
-            <span className="text-sm text-zinc-400">
-              Detected Difficulty:
-            </span>{' '}
+          <div className="mb-4 inline-block px-4 py-1 rounded bg-zinc-800 border border-zinc-700">
+            Detected Difficulty:{' '}
             <span className="font-semibold text-emerald-400 uppercase">
               {detectedLevel}
             </span>
           </div>
         )}
 
-        {/* Analysis */}
-        {result && (
-          <div className="bg-zinc-800 p-6 rounded-xl whitespace-pre-wrap">
-            <h2 className="text-xl font-semibold mb-2">Analysis</h2>
-            {result}
+        {/* Analysis Tabs */}
+        {sections && (
+          <div className="bg-zinc-800 p-6 rounded-xl">
+            <div className="flex gap-2 mb-4">
+              {(['explanation', 'complexity', 'approaches', 'next'] as TabType[])
+                .map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`px-3 py-1 rounded text-sm ${
+                      activeTab === tab
+                        ? 'bg-emerald-600'
+                        : 'bg-zinc-700'
+                    }`}
+                  >
+                    {tab.toUpperCase()}
+                  </button>
+                ))}
+            </div>
+
+            <div className="bg-zinc-900 p-4 rounded whitespace-pre-wrap text-sm">
+              {sections[activeTab] || 'No data available'}
+            </div>
           </div>
         )}
       </div>
