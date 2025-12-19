@@ -17,9 +17,9 @@ import {
 
 type Stats = {
   total: number;
-  beginner: number;
-  intermediate: number;
-  advanced: number;
+  easy: number;
+  medium: number;
+  hard: number;
 };
 
 export default function DashboardPage() {
@@ -77,9 +77,9 @@ export default function DashboardPage() {
         {status === "authenticated" && stats && (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             <StatCard title="Total Solved" value={stats.total} />
-            <StatCard title="Beginner" value={stats.beginner} />
-            <StatCard title="Intermediate" value={stats.intermediate} />
-            <StatCard title="Advanced" value={stats.advanced} />
+            <StatCard title="Beginner" value={stats.easy} />
+            <StatCard title="Intermediate" value={stats.medium} />
+            <StatCard title="Advanced" value={stats.hard} />
           </div>
         )}
         {status === "authenticated" && stats && (
@@ -94,9 +94,9 @@ export default function DashboardPage() {
                 <PieChart>
                   <Pie
                     data={[
-                      { name: "Beginner", value: stats.beginner },
-                      { name: "Intermediate", value: stats.intermediate },
-                      { name: "Advanced", value: stats.advanced },
+                      { name: "Beginner", value: stats.easy },
+                      { name: "Intermediate", value: stats.medium },
+                      { name: "Advanced", value: stats.hard },
                     ]}
                     dataKey="value"
                     innerRadius={50}
