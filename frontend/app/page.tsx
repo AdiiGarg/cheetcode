@@ -196,7 +196,7 @@ public class Main {
       <div className="max-w-4xl mx-auto">
         <h1 className="text-4xl font-bold mb-2">🐆 CheetCode</h1>
         <p className="text-zinc-400 mb-6">
-          AI-powered coding submission analysis
+          AI-powered Leetcode problem analysis
         </p>
 
         {/* Input */}
@@ -221,7 +221,7 @@ public class Main {
             disabled={leetcodeFetched}
             className="w-full bg-zinc-900 border border-zinc-700 p-3 rounded"
             rows={4}
-            placeholder="Paste LeetCode problem URL and fetch"
+            placeholder="Paste LeetCode problem URL"
             value={problem}
             onChange={(e) => setProblem(e.target.value)}
           />
@@ -231,7 +231,7 @@ public class Main {
             disabled={leetcodeLoading}
             className="w-full bg-blue-600 hover:bg-blue-700 transition p-2 rounded font-medium"
           >
-            {leetcodeLoading ? 'Fetching...' : 'Fetch Problem statement from LeetCode'}
+            {leetcodeLoading ? 'Fetching...' : 'Fetch problem statement'}
           </button>
 
           {leetcodeError && (
