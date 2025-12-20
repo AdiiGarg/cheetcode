@@ -3,67 +3,59 @@ import axios from 'axios';
 
 @Injectable()
 export class LeetCodeService {
-  private LEETCODE_URL = 'https://leetcode.com/graphql';
-
-  private extractSlug(input: string): string {
-    // Link
-    if (input.includes('leetcode.com/problems/')) {
-      return input.split('/problems/')[1].split('/')[0];
-    }
-
-    // Number → map later (phase-2)
-    if (/^\d+$/.test(input)) {
-      throw new Error('Question number mapping coming in Phase-2');
-    }
-
-    // Assume slug
-    return input.trim();
-  }
-
   async fetchProblem(input: string) {
-    const slug = this.extractSlug(input);
+    // Extract slug from URL
+    const slug = input.split('/problems/')[1]?.split('/')[0];
 
-    const query = `
-      query getQuestionDetail($titleSlug: String!) {
-        question(titleSlug: $titleSlug) {
-          questionId
-          title
-          difficulty
-          content
-          exampleTestcases
-          topicTags {
-            name
+    if (!slug) {
+      throw new Error('Invalid LeetCode URL');
+    }
+
+    const query = {
+      query: `
+        query getQuestionDetail($titleSlug: String!) {
+          question(titleSlug: $titleSlug) {
+            title
+            difficulty
+            content
           }
         }
-      }
-    `;
+      `,
+      variables: { titleSlug: slug },
+    };
 
     const res = await axios.post(
-      this.LEETCODE_URL,
-      {
-        query,
-        variables: { titleSlug: slug },
-      },
+      'https://leetcode.com/graphql',
+      query,
       {
         headers: {
           'Content-Type': 'application/json',
+          'Referer': 'https://leetcode.com',
         },
-      },
+      }
     );
 
     const q = res.data?.data?.question;
 
     if (!q) {
-      return { error: 'Problem not found' };
+      throw new Error('Question not found');
     }
 
     return {
-      id: q.questionId,
       title: q.title,
-      difficulty: q.difficulty,
-      statement: q.content, // HTML
-      examples: q.exampleTestcases,
-      topics: q.topicTags.map((t) => t.name),
+      difficulty: q.difficulty.toLowerCase(),
+      description: this.stripHtml(q.content),
     };
+  }
+
+  // 🔥 IMPORTANT: HTML → Plain text
+  private stripHtml(html: string): string {
+    return html
+      .replace(/<[^>]+>/g, '')   // remove tags
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&')
+      .trim();
   }
 }
