@@ -29,13 +29,17 @@ export class AnalysisService {
       }
 
       // ✅ SINGLE SOURCE OF TRUTH FOR LEVEL
-      const detectedLevel = data.level || 'medium';
+      const finalLevel =
+        data.leetcodeDifficulty &&
+        ['easy', 'medium', 'hard'].includes(data.leetcodeDifficulty)
+          ? data.leetcodeDifficulty
+          : 'medium';
 
       // 🧠 STRUCTURED PROMPT (JSON ONLY)
       const prompt = `
 You are a competitive programming mentor.
 
-Difficulty: ${detectedLevel}
+Difficulty: ${finalLevel}
 
 Analyze the following submission and return ONLY valid JSON.
 NO markdown. NO explanations outside JSON.
@@ -93,21 +97,21 @@ ${data.code}
         };
       }
 
-      // 💾 SAVE SUBMISSION
+      // 💾 SAVE SUBMISSION (LEVEL IS FINAL & CORRECT)
       const submission = await this.prisma.submission.create({
         data: {
           problem: data.problem,
           code: data.code,
           analysis: raw,
-          level: detectedLevel, // ✅ FIXED
+          level: finalLevel,
           user: { connect: { id: user.id } },
         },
       });
 
-      // ✅ FRONTEND-FRIENDLY RESPONSE
+      // ✅ FRONTEND RESPONSE
       return {
         id: submission.id,
-        level: detectedLevel,
+        level: finalLevel,
         analysis: parsed,
       };
     } catch (err) {
