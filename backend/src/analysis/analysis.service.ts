@@ -18,6 +18,7 @@ export class AnalysisService {
       explanation: parsed?.explanation || '',
       timeComplexity: parsed?.timeComplexity || '',
       spaceComplexity: parsed?.spaceComplexity || '',
+      topics: Array.isArray(parsed?.topics) ? parsed.topics : [],
       betterApproaches: Array.isArray(parsed?.betterApproaches)
         ? parsed.betterApproaches.map((a: any) => ({
             title: a?.title || '',
@@ -34,6 +35,7 @@ export class AnalysisService {
   // ===================== ANALYZE CODE =====================
   async analyze(data: any) {
     try {
+      // 🔐 Auth guard
       if (!data.email) {
         return { error: 'User not authenticated.' };
       }
@@ -46,26 +48,27 @@ export class AnalysisService {
         return { error: 'User not found.' };
       }
 
-      // ✅ SINGLE SOURCE OF TRUTH FOR LEVEL
+      // ✅ FINAL LEVEL (NO AI OVERRIDE)
       const finalLevel =
         data.leetcodeDifficulty &&
         ['easy', 'medium', 'hard'].includes(data.leetcodeDifficulty)
           ? data.leetcodeDifficulty
           : 'medium';
 
+      // 🧠 STRICT STRUCTURED PROMPT
       const prompt = `
 You are a competitive programming mentor.
 
 Difficulty: ${finalLevel}
 
-You MUST return VALID JSON only.
-DO NOT add any text outside JSON.
-DO NOT merge sections.
+You MUST return VALID JSON ONLY.
+NO markdown. NO extra text. NO section merging.
 
 STRICT RULES:
 - explanation: concept only
 - timeComplexity: Big-O only
 - spaceComplexity: Big-O only
+- topics: 2–4 standard CP topics ONLY
 - betterApproaches: array (can be empty)
 - nextSteps: learning advice only
 
@@ -74,6 +77,7 @@ JSON FORMAT (EXACT):
   "explanation": "",
   "timeComplexity": "",
   "spaceComplexity": "",
+  "topics": ["Arrays", "Hash Map"],
   "betterApproaches": [
     {
       "title": "",
@@ -111,20 +115,24 @@ ${data.code}
 
       const normalized = this.normalizeAnalysis(parsed);
 
+      // 💾 SAVE SUBMISSION (TOPICS INCLUDED)
       const submission = await this.prisma.submission.create({
         data: {
           problem: data.problem,
           code: data.code,
           analysis: raw,
           level: finalLevel,
+          topics: normalized.topics, // ✅ STORED
           user: { connect: { id: user.id } },
         },
       });
 
+      // ✅ FRONTEND RESPONSE
       return {
         id: submission.id,
         level: finalLevel,
         analysis: normalized,
+        topics: normalized.topics,
       };
     } catch (err) {
       console.error('Groq analyze error:', err);
@@ -150,7 +158,9 @@ ${data.code}
       const summary = submissions
         .map(
           (s) =>
-            `Difficulty: ${s.level}\nProblem: ${s.problem.substring(0, 120)}`
+            `Difficulty: ${s.level}\nTopics: ${s.topics.join(
+              ', '
+            )}\nProblem: ${s.problem.substring(0, 120)}`
         )
         .join('\n\n');
 
