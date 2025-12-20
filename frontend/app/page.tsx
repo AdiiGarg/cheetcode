@@ -221,7 +221,7 @@ public class Main {
             disabled={leetcodeFetched}
             className="w-full bg-zinc-900 border border-zinc-700 p-3 rounded"
             rows={4}
-            placeholder="Paste LeetCode problem URL"
+            placeholder="Paste LeetCode problem URL and fetch"
             value={problem}
             onChange={(e) => setProblem(e.target.value)}
           />
@@ -231,7 +231,7 @@ public class Main {
             disabled={leetcodeLoading}
             className="w-full bg-blue-600 hover:bg-blue-700 transition p-2 rounded font-medium"
           >
-            {leetcodeLoading ? 'Fetching...' : 'Fetch from LeetCode'}
+            {leetcodeLoading ? 'Fetching...' : 'Fetch Problem statement from LeetCode'}
           </button>
 
           {leetcodeError && (
