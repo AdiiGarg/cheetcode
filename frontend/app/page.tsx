@@ -292,27 +292,42 @@ public class Main {
             </div>
 
             <div className="bg-zinc-900 p-4 rounded text-sm whitespace-pre-wrap">
-              {activeTab === 'explanation' && analysis.explanation}
-
+              {activeTab === 'explanation' &&
+                (analysis.explanation || 'No explanation provided.')}
+              
               {activeTab === 'complexity' && (
                 <>
-                  <p><b>Time:</b> {analysis.timeComplexity}</p>
-                  <p><b>Space:</b> {analysis.spaceComplexity}</p>
+                  <p>
+                    <b>Time Complexity:</b>{' '}
+                    {analysis.timeComplexity || 'Not specified'}
+                  </p>
+                  <p>
+                    <b>Space Complexity:</b>{' '}
+                    {analysis.spaceComplexity || 'Not specified'}
+                  </p>
                 </>
               )}
-
+              
               {activeTab === 'approaches' &&
-                analysis.betterApproaches.map((a, i) => (
-                  <div key={i} className="mb-6">
-                    <p className="font-semibold text-emerald-400">{a.title}</p>
-                    <p>{a.description}</p>
-                    <pre className="bg-black/50 p-3 rounded mt-2">
-                      <code>{normalizeCode(a.code)}</code>
-                    </pre>
-                  </div>
+                (analysis.betterApproaches.length > 0 ? (
+                  analysis.betterApproaches.map((a, i) => (
+                    <div key={i} className="mb-6">
+                      <p className="font-semibold text-emerald-400">{a.title}</p>
+                      <p>{a.description}</p>
+                      <pre className="bg-black/50 p-3 rounded mt-2 whitespace-pre">
+                        <code>{normalizeCode(a.code)}</code>
+                      </pre>
+                      <p className="text-xs text-zinc-400">
+                        TC: {a.timeComplexity} | SC: {a.spaceComplexity}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <p>No alternative approaches available.</p>
                 ))}
-
-              {activeTab === 'next' && analysis.nextSteps}
+              
+              {activeTab === 'next' &&
+                (analysis.nextSteps || 'No next steps suggested.')}
             </div>
           </div>
         )}

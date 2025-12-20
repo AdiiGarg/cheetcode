@@ -12,10 +12,28 @@ export class AnalysisService {
     });
   }
 
+  // ===================== NORMALIZER (CRITICAL) =====================
+  private normalizeAnalysis(parsed: any) {
+    return {
+      explanation: parsed?.explanation || '',
+      timeComplexity: parsed?.timeComplexity || '',
+      spaceComplexity: parsed?.spaceComplexity || '',
+      betterApproaches: Array.isArray(parsed?.betterApproaches)
+        ? parsed.betterApproaches.map((a: any) => ({
+            title: a?.title || '',
+            description: a?.description || '',
+            code: a?.code || '',
+            timeComplexity: a?.timeComplexity || '',
+            spaceComplexity: a?.spaceComplexity || '',
+          }))
+        : [],
+      nextSteps: parsed?.nextSteps || '',
+    };
+  }
+
   // ===================== ANALYZE CODE =====================
   async analyze(data: any) {
     try {
-      // 🔐 Auth guard
       if (!data.email) {
         return { error: 'User not authenticated.' };
       }
@@ -35,37 +53,37 @@ export class AnalysisService {
           ? data.leetcodeDifficulty
           : 'medium';
 
-      // 🧠 STRUCTURED PROMPT (JSON ONLY)
       const prompt = `
 You are a competitive programming mentor.
 
 Difficulty: ${finalLevel}
 
-Analyze the following submission and return ONLY valid JSON.
-NO markdown. NO explanations outside JSON.
+You MUST return VALID JSON only.
+DO NOT add any text outside JSON.
+DO NOT merge sections.
 
-IMPORTANT RULES:
-- Code MUST contain \\n for line breaks
-- Code MUST be properly indented
-- Do NOT compress code into one line
-- Code must look like real editor code
-- ALL fields MUST exist (use empty string "" if needed)
+STRICT RULES:
+- explanation: concept only
+- timeComplexity: Big-O only
+- spaceComplexity: Big-O only
+- betterApproaches: array (can be empty)
+- nextSteps: learning advice only
 
-JSON FORMAT:
+JSON FORMAT (EXACT):
 {
-  "explanation": string,
-  "timeComplexity": string,
-  "spaceComplexity": string,
+  "explanation": "",
+  "timeComplexity": "",
+  "spaceComplexity": "",
   "betterApproaches": [
     {
-      "title": string,
-      "description": string,
-      "code": string,
-      "timeComplexity": string,
-      "spaceComplexity": string
+      "title": "",
+      "description": "",
+      "code": "",
+      "timeComplexity": "",
+      "spaceComplexity": ""
     }
   ],
-  "nextSteps": string
+  "nextSteps": ""
 }
 
 Problem:
@@ -78,27 +96,21 @@ ${data.code}
       const response = await this.groq.chat.completions.create({
         model: 'llama-3.1-8b-instant',
         messages: [{ role: 'user', content: prompt }],
-        temperature: 0.3,
-        max_tokens: 800,
+        temperature: 0,
+        max_tokens: 900,
       });
 
       const raw = response.choices[0]?.message?.content || '{}';
 
-      // 🛡️ SAFE JSON PARSE
-      let parsed;
+      let parsed: any = {};
       try {
         parsed = JSON.parse(raw);
       } catch {
-        parsed = {
-          explanation: raw,
-          timeComplexity: '',
-          spaceComplexity: '',
-          betterApproaches: [],
-          nextSteps: '',
-        };
+        parsed = {};
       }
 
-      // 💾 SAVE SUBMISSION (LEVEL IS FINAL & CORRECT)
+      const normalized = this.normalizeAnalysis(parsed);
+
       const submission = await this.prisma.submission.create({
         data: {
           problem: data.problem,
@@ -109,64 +121,66 @@ ${data.code}
         },
       });
 
-      // ✅ FRONTEND RESPONSE
       return {
         id: submission.id,
         level: finalLevel,
-        analysis: parsed,
+        analysis: normalized,
       };
     } catch (err) {
       console.error('Groq analyze error:', err);
       return {
-        error: 'Analysis failed. Check backend logs.',
+        error: 'Analysis failed. Please try again later.',
       };
     }
   }
 
   // ===================== RECOMMENDATIONS =====================
   async getRecommendations(email: string) {
-    const submissions = await this.prisma.submission.findMany({
-      where: { user: { email } },
-      orderBy: { createdAt: 'desc' },
-      take: 5,
-    });
+    try {
+      const submissions = await this.prisma.submission.findMany({
+        where: { user: { email } },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+      });
 
-    if (submissions.length === 0) {
-      return 'Not enough data.';
-    }
+      if (submissions.length === 0) {
+        return 'Not enough data.';
+      }
 
-    const summary = submissions
-      .map((s) => `Difficulty: ${s.level}\nProblem: ${s.problem.substring(0, 120)}`)
-      .join('\n\n');
+      const summary = submissions
+        .map(
+          (s) =>
+            `Difficulty: ${s.level}\nProblem: ${s.problem.substring(0, 120)}`
+        )
+        .join('\n\n');
 
-    const prompt = `
+      const prompt = `
 You are a competitive programming mentor.
 
 Based on these submissions:
-- Identify weak areas
+- Weak areas
 - Topics to improve
-- Suggest 3 next LeetCode problems
+- 3 next LeetCode problems
 
-Keep answer SHORT and concise.
+Be concise.
 
 ${summary}
 `;
 
-    const res = await this.groq.chat.completions.create({
-      model: 'llama-3.1-8b-instant',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.2,
-      max_tokens: 300, // HARD LIMIT
-    });
+      const res = await this.groq.chat.completions.create({
+        model: 'llama-3.1-8b-instant',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.2,
+        max_tokens: 300,
+      });
 
-    return res.choices[0]?.message?.content || '';
-  } catch (err: any) {
-    // 🔥 GRACEFUL FALLBACK
-    if (err?.status === 429) {
-      console.warn('Groq rate limit hit, skipping recommendations');
-      return 'Recommendations temporarily unavailable. Try again later.';
+      return res.choices[0]?.message?.content || '';
+    } catch (err: any) {
+      if (err?.status === 429) {
+        console.warn('Groq rate limit hit, skipping recommendations');
+        return 'Recommendations temporarily unavailable.';
+      }
+      throw err;
     }
-
-    throw err;
   }
 }
