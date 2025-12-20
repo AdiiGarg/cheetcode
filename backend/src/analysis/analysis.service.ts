@@ -12,32 +12,31 @@ export class AnalysisService {
     });
   }
 
-  // ===================== NORMALIZER (CRITICAL) =====================
+  // ===================== NORMALIZER =====================
   private normalizeAnalysis(parsed: any) {
     return {
-      explanation: parsed?.explanation || '',
-      timeComplexity: parsed?.timeComplexity || '',
-      spaceComplexity: parsed?.spaceComplexity || '',
-      topics: Array.isArray(parsed?.topics) ? parsed.topics : [],
+      explanation: parsed?.explanation ?? '',
+      timeComplexity: parsed?.timeComplexity ?? '',
+      spaceComplexity: parsed?.spaceComplexity ?? '',
       betterApproaches: Array.isArray(parsed?.betterApproaches)
         ? parsed.betterApproaches.map((a: any) => ({
-            title: a?.title || '',
-            description: a?.description || '',
-            code: a?.code || '',
-            timeComplexity: a?.timeComplexity || '',
-            spaceComplexity: a?.spaceComplexity || '',
+            title: a?.title ?? '',
+            description: a?.description ?? '',
+            code: a?.code ?? '',
+            timeComplexity: a?.timeComplexity ?? '',
+            spaceComplexity: a?.spaceComplexity ?? '',
           }))
         : [],
-      nextSteps: parsed?.nextSteps || '',
+      nextSteps: parsed?.nextSteps ?? '',
     };
   }
 
-  // ===================== ANALYZE CODE =====================
+  // ===================== ANALYZE =====================
   async analyze(data: any) {
     try {
       // 🔐 Auth guard
       if (!data.email) {
-        return { error: 'User not authenticated.' };
+        return { error: 'Please login to continue.' };
       }
 
       const user = await this.prisma.user.findUnique({
@@ -48,7 +47,7 @@ export class AnalysisService {
         return { error: 'User not found.' };
       }
 
-      // ✅ FINAL LEVEL (NO AI OVERRIDE)
+      // ✅ SINGLE SOURCE OF TRUTH FOR LEVEL
       const finalLevel =
         data.leetcodeDifficulty &&
         ['easy', 'medium', 'hard'].includes(data.leetcodeDifficulty)
@@ -62,22 +61,23 @@ You are a competitive programming mentor.
 Difficulty: ${finalLevel}
 
 You MUST return VALID JSON ONLY.
-NO markdown. NO extra text. NO section merging.
+NO markdown.
+NO extra text.
+NO merging of sections.
 
 STRICT RULES:
-- explanation: concept only
-- timeComplexity: Big-O only
-- spaceComplexity: Big-O only
-- topics: 2–4 standard CP topics ONLY
-- betterApproaches: array (can be empty)
-- nextSteps: learning advice only
+- explanation: conceptual explanation ONLY
+- timeComplexity: Big-O ONLY (example: O(n log n))
+- spaceComplexity: Big-O ONLY
+- betterApproaches: ARRAY (can be empty)
+- nextSteps: learning advice ONLY
+- If unsure, return EMPTY STRING "" but KEEP the key
 
 JSON FORMAT (EXACT):
 {
   "explanation": "",
   "timeComplexity": "",
   "spaceComplexity": "",
-  "topics": ["Arrays", "Hash Map"],
   "betterApproaches": [
     {
       "title": "",
@@ -106,6 +106,7 @@ ${data.code}
 
       const raw = response.choices[0]?.message?.content || '{}';
 
+      // 🛡️ SAFE PARSE
       let parsed: any = {};
       try {
         parsed = JSON.parse(raw);
@@ -115,24 +116,21 @@ ${data.code}
 
       const normalized = this.normalizeAnalysis(parsed);
 
-      // 💾 SAVE SUBMISSION (TOPICS INCLUDED)
+      // 💾 SAVE SUBMISSION (NO topics!)
       const submission = await this.prisma.submission.create({
         data: {
           problem: data.problem,
           code: data.code,
           analysis: raw,
           level: finalLevel,
-          topics: normalized.topics, // ✅ STORED
           user: { connect: { id: user.id } },
         },
       });
 
-      // ✅ FRONTEND RESPONSE
       return {
         id: submission.id,
         level: finalLevel,
         analysis: normalized,
-        topics: normalized.topics,
       };
     } catch (err) {
       console.error('Groq analyze error:', err);
@@ -152,15 +150,13 @@ ${data.code}
       });
 
       if (submissions.length === 0) {
-        return 'Not enough data.';
+        return 'Not enough data yet.';
       }
 
       const summary = submissions
         .map(
           (s) =>
-            `Difficulty: ${s.level}\nTopics: ${s.topics.join(
-              ', '
-            )}\nProblem: ${s.problem.substring(0, 120)}`
+            `Difficulty: ${s.level}\nProblem: ${s.problem.substring(0, 120)}`
         )
         .join('\n\n');
 
@@ -172,7 +168,7 @@ Based on these submissions:
 - Topics to improve
 - 3 next LeetCode problems
 
-Be concise.
+Keep it concise.
 
 ${summary}
 `;
@@ -187,7 +183,7 @@ ${summary}
       return res.choices[0]?.message?.content || '';
     } catch (err: any) {
       if (err?.status === 429) {
-        console.warn('Groq rate limit hit, skipping recommendations');
+        console.warn('Groq rate limit hit');
         return 'Recommendations temporarily unavailable.';
       }
       throw err;

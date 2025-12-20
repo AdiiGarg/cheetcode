@@ -21,7 +21,6 @@ model Submission {
   code      String
   analysis  String
   level     String
-  topics    String[]
   userId    String
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
