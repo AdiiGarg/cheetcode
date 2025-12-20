@@ -21,6 +21,7 @@ type AnalysisSections = {
   explanation: string;
   timeComplexity: string;
   spaceComplexity: string;
+  topics: string[];
   betterApproaches: BetterApproach[];
   nextSteps: string;
 };
@@ -284,6 +285,20 @@ public class Main {
             </span>
           </div>
         )}
+
+        {analysis?.topics?.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-4">
+            {analysis.topics.map((t, i) => (
+              <span
+                key={i}
+                className="px-3 py-1 rounded-full bg-zinc-700 text-xs font-medium"
+              >
+                {t}
+              </span>
+            ))}
+          </div>
+        )}
+        
 
         {/* Analysis */}
         {analysis && (
