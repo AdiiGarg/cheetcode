@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import Editor from '@monaco-editor/react';
+import LandingHero from './components/LandingHero';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
@@ -27,6 +28,14 @@ type AnalysisSections = {
 
 export default function Home() {
   const { data: session } = useSession();
+  if (!session) {
+  return (
+    <>
+      <LandingHero />
+    </>
+  );
+}
+
 
   const [problem, setProblem] = useState('');
   const [code, setCode] = useState('');
@@ -162,7 +171,7 @@ ${res.data.description}
   }
 
   return (
-    <main className="min-h-screen bg-zinc-900 text-white p-6">
+    <main className="min-h-screen flex items-center justify-center overflow-hidden">
       {/* Auth */}
       <div className="flex justify-end mb-4">
         {!session ? (
