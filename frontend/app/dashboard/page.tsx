@@ -1,8 +1,8 @@
 'use client';
 
-import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
-import axios from "axios";
+import { useSession } from 'next-auth/react';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
 import {
   PieChart,
   Pie,
@@ -12,98 +12,101 @@ import {
   Bar,
   XAxis,
   Tooltip,
-} from "recharts";
+} from 'recharts';
 
-
-type Stats = {
-  total: number;
-  beginner: number;
-  intermediate: number;
-  advanced: number;
-};
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
 
-  const [stats, setStats] = useState<Stats | null>(null);
+  const [stats, setStats] = useState({
+    total: 0,
+    easy: 0,
+    medium: 0,
+    hard: 0,
+  });
+
   const [recommendations, setRecommendations] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // ================= FETCH DASHBOARD DATA =================
   useEffect(() => {
-    // 🔒 HARD GUARD — nothing runs without authenticated user
-    if (status !== "authenticated" || !session?.user?.email) return;
+    if (status !== 'authenticated' || !session?.user?.email) return;
 
     const email = session.user.email;
     setLoading(true);
 
-    // 📊 Fetch stats
+    // 📊 Stats
     axios
-      .get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/analyze/stats?email=${email}`)
+      .get(`${BACKEND_URL}/analyze/stats`, { params: { email } })
       .then((res) => setStats(res.data))
-      .catch((err) => console.error("Stats error", err))
+      .catch((err) => console.error('Stats error:', err))
       .finally(() => setLoading(false));
 
-    // 🤖 Fetch AI recommendations
+    // 🤖 AI Recommendations
     axios
-      .get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/analyze/recommendations?email=${email}`)
-      .then((res) => setRecommendations(res.data.result))
+      .get(`${BACKEND_URL}/analyze/recommendations`, {
+        params: { email },
+      })
+      .then((res) => setRecommendations(res.data))
       .catch((err) =>
-        console.error("Recommendations error", err)
+        console.warn('Recommendations unavailable:', err?.message)
       );
-
   }, [session, status]);
+
+  const pieData = [
+    { name: 'Easy', value: stats.easy },
+    { name: 'Medium', value: stats.medium },
+    { name: 'Hard', value: stats.hard },
+  ];
 
   return (
     <main className="min-h-screen bg-zinc-900 text-white p-6">
       <div className="max-w-5xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
 
-        {/* Session states */}
-        {status === "loading" && (
+        {/* SESSION STATES */}
+        {status === 'loading' && (
           <p className="text-zinc-400">Loading session...</p>
         )}
 
-        {status === "unauthenticated" && (
-          <p className="text-red-400">
-            Please login to view dashboard
-          </p>
+        {status === 'unauthenticated' && (
+          <p className="text-red-400">Please login to view dashboard</p>
         )}
 
-        {status === "authenticated" && loading && (
+        {status === 'authenticated' && loading && (
           <p className="text-zinc-400">Loading stats...</p>
         )}
 
-        {/* Stats */}
-        {status === "authenticated" && stats && (
+        {/* STATS CARDS */}
+        {status === 'authenticated' && !loading && (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             <StatCard title="Total Solved" value={stats.total} />
-            <StatCard title="Beginner" value={stats.beginner} />
-            <StatCard title="Intermediate" value={stats.intermediate} />
-            <StatCard title="Advanced" value={stats.advanced} />
+            <StatCard title="Easy" value={stats.easy} />
+            <StatCard title="Medium" value={stats.medium} />
+            <StatCard title="Hard" value={stats.hard} />
           </div>
         )}
-        {status === "authenticated" && stats && (
+
+        {/* CHARTS */}
+        {status === 'authenticated' && !loading && (
           <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Donut Chart */}
+            {/* Difficulty Breakdown */}
             <div className="bg-zinc-800 border border-zinc-700 rounded-xl p-6 h-80">
               <h2 className="text-lg font-semibold mb-4">
                 Difficulty Breakdown
               </h2>
-                
+
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={[
-                      { name: "Beginner", value: stats.beginner },
-                      { name: "Intermediate", value: stats.intermediate },
-                      { name: "Advanced", value: stats.advanced },
-                    ]}
+                    data={pieData}
                     dataKey="value"
                     innerRadius={50}
                     outerRadius={80}
                     paddingAngle={5}
                   >
-                    {["#34d399", "#60a5fa", "#f87171"].map(
+                    {['#34d399', '#60a5fa', '#f87171'].map(
                       (color, index) => (
                         <Cell key={index} fill={color} />
                       )
@@ -113,17 +116,20 @@ export default function DashboardPage() {
                 </PieChart>
               </ResponsiveContainer>
             </div>
-                
-            {/* Bar Chart */}
+
+            {/* Problems Solved */}
             <div className="bg-zinc-800 border border-zinc-700 rounded-xl p-6 h-80">
               <h2 className="text-lg font-semibold mb-4">
                 Problems Solved
               </h2>
-                
+
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={[
-                    { name: "Solved", value: stats.total },
+                    {
+                      name: 'Solved',
+                      value: stats.total,
+                    },
                   ]}
                 >
                   <XAxis dataKey="name" />
@@ -134,10 +140,9 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
-        
 
-        {/* AI Recommendations */}
-        {status === "authenticated" && recommendations && (
+        {/* AI RECOMMENDATIONS */}
+        {status === 'authenticated' && recommendations && (
           <div className="mt-8 bg-zinc-800 border border-zinc-700 rounded-xl p-6">
             <h2 className="text-xl font-semibold mb-3">
               AI Recommendations
@@ -152,14 +157,8 @@ export default function DashboardPage() {
   );
 }
 
-/* 🔹 Reusable Stat Card */
-function StatCard({
-  title,
-  value,
-}: {
-  title: string;
-  value: number;
-}) {
+/* ================= REUSABLE CARD ================= */
+function StatCard({ title, value }: { title: string; value: number }) {
   return (
     <div className="bg-zinc-800 border border-zinc-700 rounded-xl p-6">
       <p className="text-zinc-400 text-sm">{title}</p>

@@ -176,6 +176,46 @@ ${data.code}
     }
   }
 
+  async getStats(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+  
+    if (!user) {
+      return {
+        total: 0,
+        easy: 0,
+        medium: 0,
+        hard: 0,
+      };
+    }
+  
+    const submissions = await this.prisma.submission.findMany({
+      where: {
+        userId: user.id,
+      },
+      select: {
+        level: true,
+      },
+    });
+  
+    const stats = {
+      total: submissions.length,
+      easy: 0,
+      medium: 0,
+      hard: 0,
+    };
+  
+    for (const s of submissions) {
+      if (s.level === 'easy') stats.easy++;
+      if (s.level === 'medium') stats.medium++;
+      if (s.level === 'hard') stats.hard++;
+    }
+  
+    return stats;
+  }
+  
+
   // ===================== RECOMMENDATIONS =====================
   async getRecommendations(email: string) {
     try {

@@ -27,7 +27,7 @@ export class AnalysisController {
   @Get('stats')
   async stats(@Query('email') email: string) {
     if (!email) {
-      return { total: 0, beginner: 0, intermediate: 0, advanced: 0 };
+      return { total: 0, easy: 0, medium: 0, hard: 0 };
     }
 
     const submissions = await this.prisma.submission.findMany({
@@ -37,15 +37,15 @@ export class AnalysisController {
 
     const stats = {
       total: submissions.length,
-      beginner: 0,
-      intermediate: 0,
-      advanced: 0,
+      easy: 0,
+      medium: 0,
+      hard: 0,
     };
 
     for (const s of submissions) {
-      if (s.level === 'beginner') stats.beginner++;
-      if (s.level === 'intermediate') stats.intermediate++;
-      if (s.level === 'advanced') stats.advanced++;
+      if (s.level === 'easy') stats.easy++;
+      if (s.level === 'medium') stats.medium++;
+      if (s.level === 'hard') stats.hard++;
     }
 
     return stats;
