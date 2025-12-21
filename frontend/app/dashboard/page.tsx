@@ -79,67 +79,54 @@ export default function DashboardPage() {
         )}
 
         {/* STATS CARDS */}
-        {status === 'authenticated' && !loading && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            <StatCard title="Total Solved" value={stats.total} />
-            <StatCard title="Easy" value={stats.easy} />
-            <StatCard title="Medium" value={stats.medium} />
-            <StatCard title="Hard" value={stats.hard} />
-          </div>
-        )}
+        {status === 'authenticated' && !loading && stats.total > 0 && (
+            <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-8">
+            
+              {/* Difficulty Breakdown */}
+              <div className="bg-zinc-800 border border-zinc-700 rounded-xl p-6">
+                <h2 className="text-lg font-semibold mb-4">
+                  Difficulty Breakdown
+                </h2>
+                    
+                <ResponsiveContainer width="100%" height={260}>
+                  <PieChart>
+                    <Pie
+                      data={[
+                        { name: 'Easy', value: stats.easy },
+                        { name: 'Medium', value: stats.medium },
+                        { name: 'Hard', value: stats.hard },
+                      ]}
+                      dataKey="value"
+                      innerRadius={50}
+                      outerRadius={80}
+                      paddingAngle={5}
+                    >
+                      {['#34d399', '#60a5fa', '#f87171'].map((color, i) => (
+                        <Cell key={i} fill={color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
 
-        {/* CHARTS */}
-        {status === 'authenticated' && !loading && (
-          <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Difficulty Breakdown */}
-            <div className="bg-zinc-800 border border-zinc-700 rounded-xl p-6 h-80">
-              <h2 className="text-lg font-semibold mb-4">
-                Difficulty Breakdown
-              </h2>
+    {/* Problems Solved */}
+    <div className="bg-zinc-800 border border-zinc-700 rounded-xl p-6">
+      <h2 className="text-lg font-semibold mb-4">
+        Problems Solved
+      </h2>
 
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    dataKey="value"
-                    innerRadius={50}
-                    outerRadius={80}
-                    paddingAngle={5}
-                  >
-                    {['#34d399', '#60a5fa', '#f87171'].map(
-                      (color, index) => (
-                        <Cell key={index} fill={color} />
-                      )
-                    )}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+      <ResponsiveContainer width="100%" height={260}>
+        <BarChart data={[{ name: 'Solved', value: stats.total }]}>
+          <XAxis dataKey="name" />
+          <Tooltip />
+          <Bar dataKey="value" fill="#34d399" />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  </div>
+)}
 
-            {/* Problems Solved */}
-            <div className="bg-zinc-800 border border-zinc-700 rounded-xl p-6 h-80">
-              <h2 className="text-lg font-semibold mb-4">
-                Problems Solved
-              </h2>
-
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={[
-                    {
-                      name: 'Solved',
-                      value: stats.total,
-                    },
-                  ]}
-                >
-                  <XAxis dataKey="name" />
-                  <Tooltip />
-                  <Bar dataKey="value" fill="#34d399" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        )}
 
         {/* AI RECOMMENDATIONS */}
         {status === 'authenticated' && recommendations && (
