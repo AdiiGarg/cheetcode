@@ -39,9 +39,15 @@ export default function DashboardPage() {
       .finally(() => setLoading(false));
 
     axios
-      .get(`${BACKEND_URL}/analyze/recommendations`, { params: { email } })
-      .then((res) => setRecommendations(res.data))
-      .catch(() => setRecommendations(null));
+      .get(`${BACKEND_URL}/analyze/recommendations`, {
+        params: { email },
+      })
+      .then((res) => {
+        setRecommendations(res.data.result); // 🔥 FIX
+      })
+      .catch(() =>
+        console.warn('Recommendations unavailable')
+      );
   }, [session, status]);
 
   return (
