@@ -51,6 +51,13 @@ export class AnalysisController {
     return stats;
   }
 
+  // ===================== ACTIVITY =====================
+  @Get('activity')
+  async activity(@Query('email') email: string) {
+    return this.analysisService.getActivity(email);
+  }
+  
+
   @Get('recommendations')
   async recommendations(@Query('email') email: string) {
     if (!email) {

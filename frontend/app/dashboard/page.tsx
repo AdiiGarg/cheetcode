@@ -7,7 +7,7 @@ import dynamic from 'next/dynamic';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-// 🔥 SSR OFF FOR CHARTS
+// 🔥 SSR OFF for charts
 const DashboardCharts = dynamic(
   () => import('../components/DashboardCharts'),
   { ssr: false }
@@ -32,22 +32,20 @@ export default function DashboardPage() {
     const email = session.user.email;
     setLoading(true);
 
+    // 📊 Stats
     axios
       .get(`${BACKEND_URL}/analyze/stats`, { params: { email } })
       .then((res) => setStats(res.data))
       .catch(console.error)
       .finally(() => setLoading(false));
 
+    // 🤖 Recommendations
     axios
       .get(`${BACKEND_URL}/analyze/recommendations`, {
         params: { email },
       })
-      .then((res) => {
-        setRecommendations(res.data.result); // 🔥 FIX
-      })
-      .catch(() =>
-        console.warn('Recommendations unavailable')
-      );
+      .then((res) => setRecommendations(res.data.result))
+      .catch(() => console.warn('Recommendations unavailable'));
   }, [session, status]);
 
   return (
@@ -60,9 +58,7 @@ export default function DashboardPage() {
         )}
 
         {status === 'unauthenticated' && (
-          <p className="text-red-400">
-            Please login to view dashboard
-          </p>
+          <p className="text-red-400">Please login to view dashboard</p>
         )}
 
         {status === 'authenticated' && loading && (
@@ -78,11 +74,18 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* 🔥 CLIENT-ONLY CHARTS */}
+        {/* 📊 Charts */}
         {status === 'authenticated' && !loading && stats.total > 0 && (
-          <DashboardCharts stats={stats} />
+          <div className="mt-10">
+            <DashboardCharts
+              easy={stats.easy}
+              medium={stats.medium}
+              hard={stats.hard}
+            />
+          </div>
         )}
 
+        {/* 🤖 AI Recommendations */}
         {status === 'authenticated' && recommendations && (
           <div className="mt-10 bg-zinc-800 border border-zinc-700 rounded-xl p-6">
             <h2 className="text-xl font-semibold mb-3">

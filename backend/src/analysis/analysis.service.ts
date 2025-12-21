@@ -180,7 +180,7 @@ ${data.code}
     const user = await this.prisma.user.findUnique({
       where: { email },
     });
-  
+
     if (!user) {
       return {
         total: 0,
@@ -189,7 +189,7 @@ ${data.code}
         hard: 0,
       };
     }
-  
+
     const submissions = await this.prisma.submission.findMany({
       where: {
         userId: user.id,
@@ -198,23 +198,53 @@ ${data.code}
         level: true,
       },
     });
-  
+
     const stats = {
       total: submissions.length,
       easy: 0,
       medium: 0,
       hard: 0,
     };
-  
+
     for (const s of submissions) {
       if (s.level === 'easy') stats.easy++;
       if (s.level === 'medium') stats.medium++;
       if (s.level === 'hard') stats.hard++;
     }
-  
+
     return stats;
   }
-  
+
+  // ===================== ACTIVITY (SUBMISSIONS OVER TIME) =====================
+async getActivity(email: string) {
+  if (!email) {
+    throw new Error('Email required');
+  }
+
+  const submissions = await this.prisma.submission.findMany({
+    where: {
+      user: { email },
+    },
+    select: {
+      createdAt: true,
+    },
+  });
+
+  // Group by date (YYYY-MM-DD)
+  const map: Record<string, number> = {};
+
+  submissions.forEach((s) => {
+    const date = s.createdAt.toISOString().split('T')[0];
+    map[date] = (map[date] || 0) + 1;
+  });
+
+  // Convert to array & sort
+  return Object.entries(map)
+    .map(([date, count]) => ({ date, count }))
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(-7); // last 7 days
+}
+
 
   // ===================== RECOMMENDATIONS =====================
   async getRecommendations(email: string) {
