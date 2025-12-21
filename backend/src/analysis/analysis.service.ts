@@ -72,6 +72,8 @@ STRICT RULES:
 - betterApproaches: ARRAY (can be empty)
 - nextSteps: learning advice ONLY
 - If unsure, return EMPTY STRING "" but KEEP the key
+- Time complexity and space complexity should be of the submitted code in complexity section.
+- for better approaches Time complexity and space complexity should be of only that code.
 
 JSON FORMAT (EXACT):
 {
