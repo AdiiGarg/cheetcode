@@ -183,7 +183,7 @@ ${res.data.description}
       </div>
 
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold mb-2">CheetCode</h1>
+        <h1 className="text-4xl font-bold mb-2"><img src="/logo.png" alt="CheetCode" className="h-9" />CheetCode</h1>
         <p className="text-zinc-400 mb-6">
           AI-powered LeetCode problem analysis
         </p>

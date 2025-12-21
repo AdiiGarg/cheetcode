@@ -13,6 +13,7 @@ export default function Navbar() {
         {/* Logo */}
         <Link href="/">
         <img src="/logo.png" alt="CheetCode" className="h-9" />
+        <span className="text-xl font-bold">CheetCode</span>
         </Link>
 
         {/* Right Side */}
