@@ -12,7 +12,11 @@ export default function Navbar() {
         
         {/* Logo */}
         <Link href="/">
-        <img src="/logo.png" alt="CheetCode" className="h-9" />
+        <img
+          src="/logo.png"
+          alt="CheetCode Logo"
+          className="h-8 w-8"
+        />
         <span className="text-xl font-bold">CheetCode</span>
         </Link>
 
