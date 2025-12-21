@@ -45,10 +45,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} min-h-screen overflow-hidden bg-zinc-950`}>
+        <div className = "pt-20">
         <Providers>
            <Navbar />
           {children}
         </Providers>
+        </div>
       </body>
     </html>
   );

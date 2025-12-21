@@ -145,7 +145,7 @@ public:
   }
 
   return (
-    <main className="min-h-screen flex justify-center px-6">
+    <main className="min-h-screen px-6 pt-28 pb-20 overflow-y-auto">
       <div className="max-w-4xl w-full mt-10">
         <div className="flex items-center gap-2 mb-3">
           <img src="/logo.png" className="w-12 h-12" />
@@ -157,7 +157,16 @@ public:
         </p>
 
         {/* INPUT */}
-        <div className="bg-zinc-800 p-6 rounded-xl space-y-4">
+        <div className="
+          bg-zinc-900/70
+          backdrop-blur-xl
+          p-6
+          rounded-2xl
+          space-y-4
+          border
+          border-zinc-800
+          shadow-[0_0_40px_rgba(0,0,0,0.6)]
+        ">
           <select
             className="w-full bg-zinc-900 border p-2 rounded"
             value={language}
@@ -191,6 +200,7 @@ public:
           </button>
 
           {language && (
+          <div className="mt-4 rounded-xl overflow-hidden border border-zinc-800">
             <Editor
               height="300px"
               language={language}
@@ -198,6 +208,7 @@ public:
               value={code}
               onChange={(v) => setCode(v || '')}
             />
+          </div>
           )}
 
           <button

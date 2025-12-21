@@ -28,3 +28,24 @@
 .float {
   animation: float 4s ease-in-out infinite;
 }
+
+
+body {
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(34, 197, 94, 0.12),
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at bottom right,
+      rgba(59, 130, 246, 0.12),
+      transparent 40%
+    ),
+    linear-gradient(
+      180deg,
+      #020617,
+      #020617
+    );
+  background-attachment: fixed;
+}
