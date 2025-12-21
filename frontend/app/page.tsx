@@ -322,6 +322,12 @@ ${res.data.description}
                     </p>
                   </div>
                 ))}
+                
+              {analysis.timeComplexity === 'N/A' && (
+                <p className="text-yellow-400">
+                  ⚠️ Complexity not available for incomplete code
+                </p>
+              )}
 
               {activeTab === 'next' && analysis.nextSteps}
             </div>

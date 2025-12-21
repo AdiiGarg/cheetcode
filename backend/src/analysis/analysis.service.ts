@@ -31,6 +31,25 @@ export class AnalysisService {
     };
   }
 
+  private isBoilerplateOrEmpty(code: string): boolean {
+    const stripped = code
+      .replace(/\s+/g, '')
+      .toLowerCase();
+
+    return (
+      stripped.length < 120 || // very small code
+      stripped.includes('writeyourcodehere') ||
+      stripped.includes('return0') &&
+      !stripped.includes('for') &&
+      !stripped.includes('while') &&
+      !stripped.includes('if') &&
+      !stripped.includes('map') &&
+      !stripped.includes('vector') &&
+      !stripped.includes('array')
+    );
+  }
+
+
   // ===================== ANALYZE =====================
   async analyze(data: any) {
     try {
@@ -62,27 +81,26 @@ Difficulty: ${finalLevel}
 
 You MUST return VALID JSON ONLY.
 NO markdown.
-NO explanations outside JSON.
+NO extra text.
 NO merging of sections.
 
-CRITICAL RULES (DO NOT VIOLATE):
-1. timeComplexity and spaceComplexity MUST be calculated ONLY from the USER SUBMITTED CODE.
-2. DO NOT give optimal / theoretical / problem-level complexity.
-3. Analyze EXACTLY what the submitted code does.
-4. If the submitted code is incomplete or trivial, give complexity as null or NA.
-5. For betterApproaches:
-   - timeComplexity and spaceComplexity MUST be of THAT approach's code only.
+CRITICAL RULES (ABSOLUTE):
+1. You MUST analyze ONLY the USER SUBMITTED CODE.
+2. If the code is boilerplate, incomplete, or does not solve the problem:
+   - timeComplexity MUST be "N/A"
+   - spaceComplexity MUST be "N/A"
+3. DO NOT infer problem-level or optimal complexity.
+4. DO NOT assume missing logic.
+5. If loops/DS are NOT PRESENT in code, DO NOT invent complexity.
 
 SECTION RULES:
-- explanation → conceptual explanation of USER CODE ONLY
-- timeComplexity → Big-O of USER CODE ONLY
-- spaceComplexity → Big-O of USER CODE ONLY
-- betterApproaches → alternative approaches (can be empty)
-- nextSteps → learning advice ONLY
+- explanation → explain WHAT THE CODE CURRENTLY DOES (even if useless)
+- timeComplexity → based ONLY on visible operations
+- spaceComplexity → based ONLY on visible variables
+- betterApproaches → optional
+- nextSteps → advice
 
-If unsure, return EMPTY STRING "" but KEEP the key.
-
-JSON FORMAT (EXACT, ALL KEYS REQUIRED):
+JSON FORMAT (EXACT):
 {
   "explanation": "",
   "timeComplexity": "",
@@ -124,6 +142,15 @@ ${data.code}
       }
 
       const normalized = this.normalizeAnalysis(parsed);
+          
+      // 🚨 HARD OVERRIDE FOR INCOMPLETE CODE
+      if (this.isBoilerplateOrEmpty(data.code)) {
+        normalized.timeComplexity = 'N/A';
+        normalized.spaceComplexity = 'N/A';
+        normalized.explanation =
+          'The submitted code is incomplete or boilerplate and does not implement a solution.';
+      }
+      
 
       // 💾 SAVE SUBMISSION (NO topics!)
       const submission = await this.prisma.submission.create({
