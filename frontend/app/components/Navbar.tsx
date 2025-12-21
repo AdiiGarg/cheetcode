@@ -11,8 +11,8 @@ export default function Navbar() {
       <div className="max-w-6xl mx-auto flex justify-between items-center">
         
         {/* Logo */}
-        <Link href="/" className="text-xl font-bold text-white">
-          🐆 CheetCode
+        <Link href="/">
+        <img src="/logo.png" alt="CheetCode" className="h-9" />
         </Link>
 
         {/* Right Side */}
