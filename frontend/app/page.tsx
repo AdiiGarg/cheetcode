@@ -46,31 +46,29 @@ export default function Home() {
   const [leetcodeFetched, setLeetcodeFetched] = useState(false);
 
   const defaultCodeMap: Record<string, string> = {
-    cpp: `
-class Solution {
+    cpp: 
+`class Solution {
 public:
-    void function(){
+    <datatype> function(){
       // add your code here
     }
 };`,
 
-    python: `
-class Solution(object):
+    python: 
+`class Solution(object):
     def funciotn():
         # add your code here
         `,
 
     java: 
-`
-class Solution {
+`class Solution {
     public <datatype> function() {
         // add your code here
     }
 }`,
 
     javascript: 
-`
-// write your code here`,
+`// write your code here`,
   };
 
   // 🔹 Sync user
