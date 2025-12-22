@@ -49,10 +49,10 @@ export default function DashboardPage() {
   }, [session, status]);
 
   return (
-    <main className="min-h-screen landing-bg text-white p-6 pt-28">
+    <main className="min-h-screen landing-bg text-white p-6 pt-26">
       <div className="max-w-6xl mx-auto space-y-12 backdrop-blur-sm">
 
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <h1 className="text-4xl font-bold tracking-tight">Dashboard</h1>
 
         {status === 'authenticated' && !loading && (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
