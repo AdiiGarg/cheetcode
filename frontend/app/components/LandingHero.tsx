@@ -1,5 +1,7 @@
 'use client';
 
+import Footer from '../components/Footer';
+
 import Image from 'next/image';
 import { signIn } from 'next-auth/react';
 
@@ -41,6 +43,7 @@ export default function LandingHero() {
           No spam • GitHub OAuth only • Free forever
         </p>
       </div>
+      <Footer />
     </section>
   );
 }

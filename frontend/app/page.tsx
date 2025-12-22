@@ -5,6 +5,8 @@ import axios from 'axios';
 import { useSession } from 'next-auth/react';
 import Editor from '@monaco-editor/react';
 import LandingHero from './components/LandingHero';
+import Footer from './components/Footer';
+
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
@@ -286,6 +288,7 @@ public:
         )}
 
       </div>
+      <Footer />
     </main>
   );
 }
