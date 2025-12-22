@@ -66,9 +66,9 @@ export default function MySubmissionsPage() {
     }
 
     if (search.trim()) {
-      const q = search.toLowerCase();
+      const q = search.toUpperCase();
       list = list.filter(s =>
-        getTitle(s).toLowerCase().includes(q)
+        getTitle(s).toUpperCase().includes(q)
       );
     }
 
@@ -97,7 +97,7 @@ export default function MySubmissionsPage() {
         {/* CONTROLS */}
         <div className="flex flex-col md:flex-row gap-4 justify-between">
           <input
-            placeholder="Search by problem title..."
+            placeholder="🔍︎ Search by problem title..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="bg-zinc-900/70 border border-zinc-800 rounded-lg px-4 py-2 text-sm w-full md:w-80"
@@ -132,7 +132,7 @@ export default function MySubmissionsPage() {
         {loading && <p className="text-zinc-400">Loading…</p>}
 
         {/* LIST */}
-        <section className="space-y-5">
+        <section className="space-y-6">
           {filtered.map(sub => {
             const key = sub._id || sub.id!;
             return (
@@ -187,7 +187,7 @@ function SubmissionCard({
             {sub.level}
           </span>
         </div>
-        <h3 className="text-lg font-semibold">
+        <h3 className="text-lg font-semibold text-emerald-400">
           {getTitle(sub)}
         </h3>
       </button>
