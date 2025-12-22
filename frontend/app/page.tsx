@@ -67,13 +67,39 @@ public:
   useEffect(() => {
     if (!session?.user?.email || !BACKEND_URL) return;
 
-    axios
-      .post(`${BACKEND_URL}/auth/sync`, {
-        email: session.user.email,
-        name: session.user.name,
-      })
-      .catch(() => {});
+    axios.post(`${BACKEND_URL}/auth/sync`, {
+      email: session.user.email,
+      name: session.user.name,
+    }).catch(() => {});
   }, [session]);
+
+  /* ---------------- FETCH LEETCODE ---------------- */
+  async function fetchFromLeetCode() {
+    if (!problem.startsWith('http')) {
+      setLeetcodeError('Paste a valid LeetCode problem URL');
+      return;
+    }
+
+    try {
+      setLeetcodeLoading(true);
+      setLeetcodeError('');
+      setAnalysis(null);
+      setLevel(null);
+
+      const res = await axios.get(
+        `${BACKEND_URL}/leetcode/fetch`,
+        { params: { input: problem } }
+      );
+
+      setProblem(`Title: ${res.data.title}\n\n${res.data.description}`);
+      setLevel(res.data.difficulty.toLowerCase());
+      setLeetcodeFetched(true);
+    } catch {
+      setLeetcodeError('Failed to fetch from LeetCode');
+    } finally {
+      setLeetcodeLoading(false);
+    }
+  }
 
   /* ---------------- ANALYZE ---------------- */
   async function analyze() {
@@ -83,7 +109,7 @@ public:
     }
 
     if (!level) {
-      setError('Please fetch the problem from LeetCode first.');
+      setError('Fetch problem first');
       return;
     }
 
@@ -108,33 +134,6 @@ public:
     }
   }
 
-  /* ---------------- FETCH LEETCODE ---------------- */
-  async function fetchFromLeetCode() {
-    if (!problem.startsWith('http')) {
-      setLeetcodeError('Paste a valid LeetCode problem URL');
-      return;
-    }
-
-    try {
-      setLeetcodeLoading(true);
-      setLeetcodeError('');
-      setLevel(null);
-
-      const res = await axios.get(
-        `${BACKEND_URL}/leetcode/fetch`,
-        { params: { input: problem } }
-      );
-
-      setProblem(`Title: ${res.data.title}\n\n${res.data.description}`);
-      setLevel(res.data.difficulty.toLowerCase());
-      setLeetcodeFetched(true);
-    } catch {
-      setLeetcodeError('Failed to fetch from LeetCode');
-    } finally {
-      setLeetcodeLoading(false);
-    }
-  }
-
   /* ---------------- LANDING ---------------- */
   if (!session) {
     return <LandingHero />;
@@ -142,16 +141,14 @@ public:
 
   /* ---------------- PAGE ---------------- */
   return (
-    <main className="min-h-screen px-6 pt-32 pb-24 overflow-y-auto">
+    <main className="min-h-screen overflow-y-auto px-6 pt-32 pb-24">
       <div className="max-w-4xl mx-auto w-full">
 
         {/* HEADER */}
         <div className="text-center mb-10">
           <div className="flex justify-center items-center gap-3 mb-3">
             <img src="/logo.png" className="w-14 h-12" />
-            <h1 className="text-4xl font-semibold text-white">
-              CheetCode
-            </h1>
+            <h1 className="text-4xl font-semibold text-white">CheetCode</h1>
           </div>
           <p className="text-zinc-400 text-lg">
             AI-powered LeetCode problem analysis
@@ -189,16 +186,13 @@ public:
           <button
             onClick={fetchFromLeetCode}
             disabled={leetcodeLoading}
-            className="w-full bg-blue-600 hover:bg-blue-700 transition p-2 rounded font-medium"
+            className="w-full bg-blue-600 hover:bg-blue-700 transition p-2 rounded font-semibold"
           >
             {leetcodeLoading ? 'Fetching...' : 'Fetch problem'}
           </button>
 
-          {leetcodeError && (
-            <p className="text-red-400 text-sm">{leetcodeError}</p>
-          )}
+          {leetcodeError && <p className="text-red-400 text-sm">{leetcodeError}</p>}
 
-          {/* ✅ LEVEL BADGE (FIXED) */}
           {level && (
             <div className="inline-block px-4 py-1 rounded bg-zinc-800 border border-zinc-700 text-sm">
               Detected Difficulty:{' '}
@@ -225,7 +219,6 @@ public:
             </div>
           )}
 
-          {/* ✅ ANALYZE BUTTON FIXED */}
           <button
             onClick={analyze}
             disabled={loading || !level}
@@ -235,17 +228,63 @@ public:
                 : 'bg-emerald-600 hover:bg-emerald-700'
             }`}
           >
-            {!level
-              ? 'Fetch problem first'
-              : loading
-              ? 'Analyzing...'
-              : 'Analyze'}
+            {loading ? 'Analyzing...' : 'Analyze'}
           </button>
 
-          {error && (
-            <p className="text-red-400 text-sm">{error}</p>
-          )}
+          {error && <p className="text-red-400 text-sm">{error}</p>}
         </div>
+
+        {/* ---------------- ANALYSIS RESULT ---------------- */}
+        {analysis && (
+          <div className="mt-12 bg-zinc-900/70 backdrop-blur-xl border border-zinc-800 rounded-2xl p-6 shadow-[0_0_40px_rgba(0,0,0,0.6)]">
+
+            {/* Tabs */}
+            <div className="flex gap-2 mb-4">
+              {(['explanation', 'complexity', 'approaches', 'next'] as TabType[])
+                .map(tab => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`px-4 py-1.5 rounded-full text-sm ${
+                      activeTab === tab
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
+                    }`}
+                  >
+                    {tab.toUpperCase()}
+                  </button>
+                ))}
+            </div>
+
+            <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-4 text-sm whitespace-pre-wrap leading-relaxed">
+              {activeTab === 'explanation' && analysis.explanation}
+
+              {activeTab === 'complexity' && (
+                <>
+                  <p><b>Time Complexity:</b> {analysis.timeComplexity}</p>
+                  <p className="mt-2"><b>Space Complexity:</b> {analysis.spaceComplexity}</p>
+                </>
+              )}
+
+              {activeTab === 'approaches' &&
+                analysis.betterApproaches.map((a, i) => (
+                  <div key={i} className="mb-6">
+                    <h4 className="font-semibold text-emerald-400">{a.title}</h4>
+                    <p className="mt-1">{a.description}</p>
+                    <pre className="mt-3 bg-black/60 p-4 rounded-lg overflow-x-auto">
+                      <code>{a.code}</code>
+                    </pre>
+                    <p className="mt-2 text-xs text-zinc-400">
+                      TC: {a.timeComplexity} | SC: {a.spaceComplexity}
+                    </p>
+                  </div>
+                ))}
+
+              {activeTab === 'next' && analysis.nextSteps}
+            </div>
+          </div>
+        )}
+
       </div>
     </main>
   );
