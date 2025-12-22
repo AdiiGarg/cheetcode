@@ -157,7 +157,7 @@ ${data.code}
         data: {
           problem: data.problem,
           code: data.code,
-          analysis: raw,
+          analysis: JSON.stringify(normalized),
           level: finalLevel,
           user: { connect: { id: user.id } },
         },
