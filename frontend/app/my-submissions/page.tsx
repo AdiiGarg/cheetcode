@@ -15,12 +15,14 @@ type Analysis = {
 };
 
 type Submission = {
-  _id: string;
+  id?: string;
+  _id?: string;
   createdAt: string;
   level: 'easy' | 'medium' | 'hard';
   title?: string | null;
   problem?: string | null;
-  analysis?: string | Analysis | null; // 🔴 string from DB
+  code?: string | null;
+  analysis?: string | Analysis | null;
 };
 
 /* ---------------- PAGE ---------------- */
@@ -36,8 +38,8 @@ export default function MySubmissionsPage() {
     useState<'all' | 'easy' | 'medium' | 'hard'>('all');
   const [sort, setSort] = useState<'latest' | 'oldest'>('latest');
 
-  // ✅ only one expanded at a time
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  // ✅ SINGLE expanded card
+  const [expandedKey, setExpandedKey] = useState<string | null>(null);
 
   /* ---------------- FETCH ---------------- */
 
@@ -54,7 +56,7 @@ export default function MySubmissionsPage() {
       .finally(() => setLoading(false));
   }, [session, status]);
 
-  /* ---------------- FILTER / SEARCH / SORT ---------------- */
+  /* ---------------- FILTER ---------------- */
 
   const filtered = useMemo(() => {
     let list = [...submissions];
@@ -85,18 +87,15 @@ export default function MySubmissionsPage() {
     <main className="min-h-screen landing-bg text-white px-6 pt-32 pb-24">
       <div className="max-w-6xl mx-auto space-y-10">
 
-        {/* HEADER */}
         <header>
-          <h1 className="text-4xl font-bold tracking-tight">
-            My Submissions
-          </h1>
+          <h1 className="text-4xl font-bold">My Submissions</h1>
           <p className="text-zinc-400 mt-2">
             Revisit and review your past AI analyses
           </p>
         </header>
 
         {/* CONTROLS */}
-        <div className="flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
+        <div className="flex flex-col md:flex-row gap-4 justify-between">
           <input
             placeholder="Search by problem title..."
             value={search}
@@ -109,12 +108,11 @@ export default function MySubmissionsPage() {
               <button
                 key={d}
                 onClick={() => setDifficulty(d as any)}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition
-                  ${
-                    difficulty === d
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
-                  }`}
+                className={`px-3 py-1 rounded-full text-xs font-semibold
+                  ${difficulty === d
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'}
+                `}
               >
                 {d.toUpperCase()}
               </button>
@@ -131,32 +129,23 @@ export default function MySubmissionsPage() {
           </div>
         </div>
 
-        {loading && (
-          <p className="text-zinc-400">Loading submissions...</p>
-        )}
-
-        {!loading && filtered.length === 0 && (
-          <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-8 text-center">
-            <p className="text-zinc-300">
-              No submissions found.
-            </p>
-          </div>
-        )}
+        {loading && <p className="text-zinc-400">Loading…</p>}
 
         {/* LIST */}
         <section className="space-y-5">
-          {filtered.map(sub => (
-            <SubmissionCard
-              key={sub._id}
-              sub={sub}
-              expanded={expandedId === sub._id}
-              onToggle={() =>
-                setExpandedId(
-                  expandedId === sub._id ? null : sub._id
-                )
-              }
-            />
-          ))}
+          {filtered.map(sub => {
+            const key = sub._id || sub.id!;
+            return (
+              <SubmissionCard
+                key={key}
+                sub={sub}
+                expanded={expandedKey === key}
+                onToggle={() =>
+                  setExpandedKey(expandedKey === key ? null : key)
+                }
+              />
+            );
+          })}
         </section>
       </div>
     </main>
@@ -186,63 +175,63 @@ function SubmissionCard({
       : sub.analysis ?? null;
 
   return (
-    <div className="bg-zinc-900/70 backdrop-blur-xl border border-zinc-800 rounded-2xl p-6 transition">
+    <div className="bg-zinc-900/70 border border-zinc-800 rounded-2xl p-6">
 
-      {/* HEADER (CLICK ONLY HERE) */}
+      {/* HEADER */}
       <button onClick={onToggle} className="w-full text-left">
-        <div className="flex justify-between items-center mb-2">
+        <div className="flex justify-between mb-2">
           <span className="text-xs text-zinc-400">
             {new Date(sub.createdAt).toLocaleString()}
           </span>
-          <span
-            className={`text-xs font-semibold uppercase ${levelColor[sub.level]}`}
-          >
+          <span className={`text-xs font-semibold ${levelColor[sub.level]}`}>
             {sub.level}
           </span>
         </div>
-
         <h3 className="text-lg font-semibold">
           {getTitle(sub)}
         </h3>
       </button>
 
       {/* EXPANDED */}
-      {expanded && analysis && (
+      {expanded && (
         <div className="mt-5 border-t border-zinc-800 pt-4 space-y-5">
 
-          {analysis.explanation && (
-            <div>
-              <p className="text-sm font-semibold text-emerald-400 mb-1">
-                Explanation
-              </p>
-              <p className="text-sm text-zinc-300 leading-relaxed">
-                {analysis.explanation}
-              </p>
-            </div>
+          {analysis?.explanation && (
+            <Section title="Explanation">
+              {analysis.explanation}
+            </Section>
           )}
 
-          {analysis.betterApproaches?.length ? (
-            <div>
-              <p className="text-sm font-semibold text-emerald-400 mb-2">
-                Key Takeaways
-              </p>
-              <ul className="list-disc list-inside text-sm text-zinc-300 space-y-1">
+          {analysis?.betterApproaches?.length ? (
+            <Section title="Key Takeaways">
+              <ul className="list-disc list-inside space-y-1">
                 {analysis.betterApproaches.slice(0, 4).map((a, i) => (
                   <li key={i}>{a.title}</li>
                 ))}
               </ul>
-            </div>
+            </Section>
           ) : null}
 
-          {analysis.nextSteps && (
-            <div>
-              <p className="text-sm font-semibold text-emerald-400 mb-1">
-                Tips
-              </p>
-              <p className="text-sm text-zinc-300">
-                {analysis.nextSteps}
-              </p>
-            </div>
+          {analysis?.nextSteps && (
+            <Section title="Tips">
+              {analysis.nextSteps}
+            </Section>
+          )}
+
+          {/* CODE */}
+          {sub.code && (
+            <Section title="Submitted Code">
+              <pre className="bg-zinc-950 border border-zinc-800 rounded-lg p-4 text-xs overflow-x-auto">
+                {sub.code}
+              </pre>
+
+              <button
+                onClick={() => navigator.clipboard.writeText(sub.code!)}
+                className="mt-2 text-xs bg-emerald-600 hover:bg-emerald-500 px-3 py-1 rounded"
+              >
+                Copy Code
+              </button>
+            </Section>
           )}
         </div>
       )}
@@ -250,7 +239,18 @@ function SubmissionCard({
   );
 }
 
-/* ---------------- UTILS ---------------- */
+/* ---------------- UI HELPERS ---------------- */
+
+function Section({ title, children }: any) {
+  return (
+    <div>
+      <p className="text-sm font-semibold text-emerald-400 mb-1">
+        {title}
+      </p>
+      <div className="text-sm text-zinc-300">{children}</div>
+    </div>
+  );
+}
 
 function safeParse(value: string): Analysis | null {
   try {
@@ -261,11 +261,9 @@ function safeParse(value: string): Analysis | null {
 }
 
 function getTitle(sub: Submission): string {
-  if (sub.title && sub.title.trim()) return sub.title;
-
+  if (sub.title?.trim()) return sub.title;
   if (sub.problem?.startsWith('Title:')) {
     return sub.problem.split('\n')[0].replace('Title:', '').trim();
   }
-
   return 'Untitled Problem';
 }
