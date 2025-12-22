@@ -65,7 +65,7 @@ Built to help you understand **what your code actually does**, not just whether 
 
 ## 🔑 Environment Variables
 
-### Frontend (Vercel)
+### 🌐 Frontend (Vercel)
 ```env
 NEXT_PUBLIC_BACKEND_URL=
 NEXTAUTH_URL=
@@ -73,60 +73,70 @@ NEXTAUTH_SECRET=
 GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
 
-Backend (Railway / Server)
-env
-Copy code
+```
+### 🎯 Backend (Railway / Server)
+```env
+
 DATABASE_URL=
 GROQ_API_KEY=
-Notes
+```
+Notes-
+
 NEXT_PUBLIC_BACKEND_URL must be enabled for production
 
 GROQ_API_KEY is required for AI analysis & recommendations
 
-Docker is not required in production and can be stopped locally
+---
 
-🚀 Local Setup
-bash
-Copy code
-# Frontend
-npm install
-npm run dev
+## 🚀 Local Setup
 
-# Backend
-npm install
-npm run start:dev
+
+### 🌐 Frontend
+  npm install
+
+  npm run dev
+
+### 🎯 Backend
+  npm install
+
+  npm run start:dev
+
 Ensure PostgreSQL is running and environment variables are configured.
 
-📌 Current Version
-CheetCode v1.0
+---
 
-Stable AI analysis flow
+## 📌 Current Version
+### 🐆 CheetCode v1.0
 
-Submission tracking & dashboard
+-Stable AI analysis flow
 
-Production-ready MVP
+-Submission tracking & dashboard
 
-🔮 Planned Improvements
-Re-analyze past submissions
+-Production-ready MVP
 
-Topic-wise progress tracking
+### 🔮 Planned Improvements
+-Re-analyze past submissions
 
-Coding streaks
+-Topic-wise progress tracking
 
-Advanced AI insights
+-Coding streaks
 
-Performance comparison across submissions
+-Advanced AI insights
 
-👤 Author
+-Performance comparison across submissions
+
+---
+
+## 👤 Author
 Made by Aditya Garg
 
-GitHub
+GitHub- https://github.com/AdiiGarg
 
-LinkedIn
+LinkedIn- https://linkedin.com/in/aditya-garg-043637343
 
-Email
+Email- adiiigarg16@gmail.com
 
-⭐ Final Note
+## ⭐ Final Note
 CheetCode is built to help you learn deeply, not shortcut problem-solving.
 It focuses on understanding why your solution behaves the way it does.
 
