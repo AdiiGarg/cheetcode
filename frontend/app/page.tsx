@@ -27,7 +27,6 @@ type AnalysisSections = {
 };
 
 export default function Home() {
-  /* ---------------- AUTH ---------------- */
   const { data: session } = useSession();
 
   /* ---------------- STATES ---------------- */
@@ -68,15 +67,13 @@ public:
   useEffect(() => {
     if (!session?.user?.email || !BACKEND_URL) return;
 
-    axios.post(`${BACKEND_URL}/auth/sync`, {
-      email: session.user.email,
-      name: session.user.name,
-    }).catch(() => {});
+    axios
+      .post(`${BACKEND_URL}/auth/sync`, {
+        email: session.user.email,
+        name: session.user.name,
+      })
+      .catch(() => {});
   }, [session]);
-
-  function normalizeCode(code: string) {
-    return code.replace(/\\n/g, '\n').replace(/\t/g, '    ').trim();
-  }
 
   /* ---------------- ANALYZE ---------------- */
   async function analyze() {
@@ -86,7 +83,7 @@ public:
     }
 
     if (!level) {
-      setError('Problem difficulty not detected yet.');
+      setError('Please fetch the problem from LeetCode first.');
       return;
     }
 
@@ -121,6 +118,7 @@ public:
     try {
       setLeetcodeLoading(true);
       setLeetcodeError('');
+      setLevel(null);
 
       const res = await axios.get(
         `${BACKEND_URL}/leetcode/fetch`,
@@ -150,7 +148,7 @@ public:
         {/* HEADER */}
         <div className="text-center mb-10">
           <div className="flex justify-center items-center gap-3 mb-3">
-            <img src="/logo.png" className="w-15 h-12" />
+            <img src="/logo.png" className="w-14 h-12" />
             <h1 className="text-4xl font-semibold text-white">
               CheetCode
             </h1>
@@ -161,17 +159,8 @@ public:
         </div>
 
         {/* INPUT CARD */}
-        <div
-          className="
-            bg-zinc-900/70
-            backdrop-blur-xl
-            p-6
-            rounded-2xl
-            space-y-4
-            border border-zinc-800
-            shadow-[0_0_40px_rgba(0,0,0,0.6)]
-          "
-        >
+        <div className="bg-zinc-900/70 backdrop-blur-xl p-6 rounded-2xl space-y-4 border border-zinc-800 shadow-[0_0_40px_rgba(0,0,0,0.6)]">
+
           <select
             className="w-full bg-zinc-900 border border-zinc-700 p-2 rounded text-white"
             value={language}
@@ -209,6 +198,16 @@ public:
             <p className="text-red-400 text-sm">{leetcodeError}</p>
           )}
 
+          {/* ✅ LEVEL BADGE (FIXED) */}
+          {level && (
+            <div className="inline-block px-4 py-1 rounded bg-zinc-800 border border-zinc-700 text-sm">
+              Detected Difficulty:{' '}
+              <span className="uppercase font-semibold text-emerald-400">
+                {level}
+              </span>
+            </div>
+          )}
+
           {language && (
             <div className="mt-4 rounded-xl overflow-hidden border border-zinc-800">
               <Editor
@@ -226,19 +225,27 @@ public:
             </div>
           )}
 
+          {/* ✅ ANALYZE BUTTON FIXED */}
           <button
             onClick={analyze}
-            disabled={loading}
-            className="w-full bg-emerald-600 hover:bg-emerald-700 transition p-3 rounded font-semibold"
+            disabled={loading || !level}
+            className={`w-full transition p-3 rounded font-semibold ${
+              !level
+                ? 'bg-zinc-700 cursor-not-allowed'
+                : 'bg-emerald-600 hover:bg-emerald-700'
+            }`}
           >
-            {loading ? 'Analyzing...' : 'Analyze'}
+            {!level
+              ? 'Fetch problem first'
+              : loading
+              ? 'Analyzing...'
+              : 'Analyze'}
           </button>
 
           {error && (
             <p className="text-red-400 text-sm">{error}</p>
           )}
         </div>
-
       </div>
     </main>
   );
