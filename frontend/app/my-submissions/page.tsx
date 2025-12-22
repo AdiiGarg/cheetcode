@@ -32,7 +32,7 @@ export default function MySubmissionsPage() {
     setLoading(true);
 
     axios
-      .get(`${BACKEND_URL}/analyze/submissions`, {
+      .get(`${BACKEND_URL}/analyze/my-submissions`, {
         params: { email: session.user.email },
       })
       .then(res => setSubmissions(res.data || []))
